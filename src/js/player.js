@@ -42,8 +42,10 @@ export class Player {
         this.pixelPos = { x: 0, y: 0 };
         this.moved = false;
         this.movement = PLAYER.DIRECTION.DOWN;
+        
+        // Shadow drawing
         this.drawShadow = true;
-        this.movementDuration = PHYSICS.MOVEMENT_DURATION;
+        this.movementDuration = game.getMovementDuration(); // Use game's movement speed setting
         
         // Animation properties
         this.animations = {};
@@ -66,6 +68,8 @@ export class Player {
         
         // Initialize player animations
         this.initAnimations();
+        
+        // Find player starting position from level data
         this.findStartPosition();
     }
 

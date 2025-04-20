@@ -35,7 +35,14 @@ export default {
     on: "Be",
     off: "Ki",
     paused: "SZÜNET",
-    resumeHint: "Nyomj ESC-et vagy P-t a folytatáshoz"
+    resumeHint: "Nyomj ESC-et vagy P-t a folytatáshoz",
+    movementSpeed: "Mozgási sebesség"
+  },
+  speeds: {
+    slow: "Lassú",
+    normal: "Normál",
+    fast: "Gyors",
+    veryFast: "Nagyon gyors"
   },
   loading: {
     title: "Betöltés",

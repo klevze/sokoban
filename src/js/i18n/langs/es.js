@@ -35,7 +35,14 @@ export default {
     on: "Activado",
     off: "Desactivado",
     paused: "PAUSADO",
-    resumeHint: "Presiona ESC o P para reanudar"
+    resumeHint: "Presiona ESC o P para reanudar",
+    movementSpeed: "Velocidad de movimiento"
+  },
+  speeds: {
+    slow: "Lento",
+    normal: "Normal",
+    fast: "Rápido",
+    veryFast: "Muy rápido"
   },
   loading: {
     title: "Cargando",

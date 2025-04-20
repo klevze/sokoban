@@ -35,7 +35,14 @@ export default {
     on: "Укључено",
     off: "Искључено",
     paused: "ПАУЗА",
-    resumeHint: "Притисните ESC или P за наставак"
+    resumeHint: "Притисните ESC или P за наставак",
+    movementSpeed: "Брзина кретања"
+  },
+  speeds: {
+    slow: "Споро",
+    normal: "Нормално",
+    fast: "Брзо",
+    veryFast: "Веома брзо"
   },
   loading: {
     title: "Учитавање",

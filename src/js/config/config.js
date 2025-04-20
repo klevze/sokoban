@@ -16,6 +16,13 @@ export const PHYSICS = {
   ANIMATION_FRAME_RATE: 16,    // Decrease for more frequent updates (around 60fps)
   KEY_THROTTLE_DELAY: 150,    // Minimum time (ms) between key press actions
   MOVEMENT_DURATION: 300,     // Duration of movement animation in milliseconds
+  MOVEMENT_SPEEDS: {
+    SLOW: 450,               // Slow movement speed (450ms per tile)
+    NORMAL: 300,             // Normal movement speed (300ms per tile)
+    FAST: 150,               // Fast movement speed (150ms per tile)
+    VERY_FAST: 80            // Very fast movement speed (80ms per tile)
+  },
+  DEFAULT_SPEED: 'NORMAL'    // Default movement speed setting
 };
 
 // Tile and Sprite Settings

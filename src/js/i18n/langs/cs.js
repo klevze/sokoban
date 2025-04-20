@@ -35,7 +35,14 @@ export default {
     on: "Zapnuto",
     off: "Vypnuto",
     paused: "PAUZA",
-    resumeHint: "Stiskněte ESC nebo P pro pokračování"
+    resumeHint: "Stiskněte ESC nebo P pro pokračování",
+    movementSpeed: "Rychlost pohybu"
+  },
+  speeds: {
+    slow: "Pomalá",
+    normal: "Normální",
+    fast: "Rychlá",
+    veryFast: "Velmi rychlá"
   },
   loading: {
     title: "Načítání",

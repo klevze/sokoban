@@ -38,7 +38,7 @@ export class Boxes {
         this.isMoving = false;
         this.moveSpeed = 25; // Speed of movement animation in ms (lower = faster)
         this.moveSmoothness = PHYSICS.ANIMATION_SMOOTHNESS; // Number of animation steps
-        this.movementDuration = PHYSICS.MOVEMENT_DURATION; // Duration of movement animation in ms
+        this.movementDuration = game.getMovementDuration(); // Use game's movement speed setting
         
         // Store box data and movement intervals
         this.boxes = this.parseBoxes();

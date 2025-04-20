@@ -419,8 +419,32 @@ function handleCanvasClick(event, gameInstance) {
         // Handle clicks on win screen (advance to next level)
         handleSpaceKey(gameInstance);
     } else if (gameInstance.state === GAME_STATES.PAUSED) {
-        // Resume game if clicked while paused
-        gameInstance.setState(GAME_STATES.PLAY);
+        // Check for clicks on speed setting buttons
+        if (gameInstance.speedButtons) {
+            for (const button of gameInstance.speedButtons) {
+                if (mouseX >= button.x && mouseX <= button.x + button.width &&
+                    mouseY >= button.y && mouseY <= button.y + button.height) {
+                    // Change the movement speed setting
+                    gameInstance.setMovementSpeed(button.value);
+                    break;
+                }
+            }
+        }
+        
+        // Resume game if clicked outside of settings area
+        // Check if click is far from the speed buttons
+        const buttonAreaTop = gameInstance.canvas.height / 2 - 100 + 60;
+        const buttonAreaBottom = buttonAreaTop + 140;
+        const buttonAreaWidth = 440; // Approximate width of all buttons
+        const buttonAreaLeft = gameInstance.canvas.width / 2 - buttonAreaWidth / 2;
+        const buttonAreaRight = buttonAreaLeft + buttonAreaWidth;
+        
+        const isOutsideButtonArea = mouseY < buttonAreaTop - 30 || mouseY > buttonAreaBottom + 30 ||
+                                  mouseX < buttonAreaLeft - 30 || mouseX > buttonAreaRight + 30;
+        
+        if (isOutsideButtonArea) {
+            gameInstance.setState(GAME_STATES.PLAY);
+        }
     }
 }
 

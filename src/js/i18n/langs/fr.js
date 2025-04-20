@@ -35,7 +35,14 @@ export default {
     on: "Activé",
     off: "Désactivé",
     paused: "PAUSE",
-    resumeHint: "Appuyez sur ÉCHAP ou P pour reprendre"
+    resumeHint: "Appuyez sur ÉCHAP ou P pour reprendre",
+    movementSpeed: "Vitesse de déplacement"
+  },
+  speeds: {
+    slow: "Lente",
+    normal: "Normale",
+    fast: "Rapide",
+    veryFast: "Très rapide"
   },
   loading: {
     title: "Chargement",

@@ -35,7 +35,14 @@ export default {
     on: "Vključeno",
     off: "Izključeno",
     paused: "PREMOR",
-    resumeHint: "Pritisni ESC ali P za nadaljevanje"
+    resumeHint: "Pritisni ESC ali P za nadaljevanje",
+    movementSpeed: "Hitrost premikanja"
+  },
+  speeds: {
+    slow: "Počasno",
+    normal: "Normalno",
+    fast: "Hitro",
+    veryFast: "Zelo hitro"
   },
   loading: {
     title: "Nalaganje",

@@ -35,7 +35,14 @@ export default {
     on: "An",
     off: "Aus",
     paused: "PAUSIERT",
-    resumeHint: "Drücke ESC oder P zum Fortsetzen"
+    resumeHint: "Drücke ESC oder P zum Fortsetzen",
+    movementSpeed: "Bewegungsgeschwindigkeit"
+  },
+  speeds: {
+    slow: "Langsam",
+    normal: "Normal",
+    fast: "Schnell",
+    veryFast: "Sehr schnell"
   },
   loading: {
     title: "Wird geladen",

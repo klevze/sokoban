@@ -35,7 +35,14 @@ export default {
     on: "开启",
     off: "关闭",
     paused: "已暂停",
-    resumeHint: "按ESC或P继续"
+    resumeHint: "按ESC或P继续",
+    movementSpeed: "移动速度"
+  },
+  speeds: {
+    slow: "慢速",
+    normal: "正常",
+    fast: "快速",
+    veryFast: "极快"
   },
   loading: {
     title: "加载中",

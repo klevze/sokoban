@@ -56,6 +56,13 @@ class Game {
         // Game state
         this.state = GAME_STATES.LOADING;
         
+        // Game settings
+        this.settings = {
+            movementSpeed: PHYSICS.DEFAULT_SPEED,
+            soundEnabled: true,
+            musicEnabled: true
+        };
+        
         // Set up animation frame
         this.animationFrameId = null;
         
@@ -627,16 +634,82 @@ class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         const textX = this.ctx.canvas.width / 2;
-        const textY = this.ctx.canvas.height / 2;
+        const textY = this.ctx.canvas.height / 2 - 100;
         
         // Draw pause text
         this.ctx.font = "30px Arial";
         this.ctx.textAlign = "center";
         this.ctx.fillStyle = "white";
-        this.ctx.fillText(this.resources.i18n.get('settings.paused'), textX, textY - 20);
+        this.ctx.fillText(this.resources.i18n.get('settings.paused'), textX, textY);
+        
+        // Draw movement speed setting
+        this.ctx.font = "20px Arial";
+        this.ctx.fillText(this.resources.i18n.get('settings.movementSpeed') || "Movement Speed", textX, textY + 60);
+        
+        // Draw speed settings buttons
+        this._drawSpeedButtons(textX, textY + 100);
         
         this.ctx.font = "16px Arial";
-        this.ctx.fillText(this.resources.i18n.get('settings.resumeHint'), textX, textY + 20);
+        this.ctx.fillText(this.resources.i18n.get('settings.resumeHint'), textX, textY + 180);
+    }
+    
+    /**
+     * Draw speed setting buttons with visual indication of the selected option
+     * @param {number} centerX - Center X position for the buttons
+     * @param {number} y - Y position for the buttons
+     * @private
+     */
+    _drawSpeedButtons(centerX, y) {
+        const buttonWidth = 100;
+        const buttonHeight = 40;
+        const buttonGap = 20;
+        const totalWidth = (buttonWidth * 4) + (buttonGap * 3);
+        const startX = centerX - (totalWidth / 2);
+        
+        const speedOptions = [
+            { key: 'SLOW', label: this.resources.i18n.get('speeds.slow') || 'Slow' },
+            { key: 'NORMAL', label: this.resources.i18n.get('speeds.normal') || 'Normal' },
+            { key: 'FAST', label: this.resources.i18n.get('speeds.fast') || 'Fast' },
+            { key: 'VERY_FAST', label: this.resources.i18n.get('speeds.veryFast') || 'Very Fast' }
+        ];
+        
+        this.ctx.font = "16px Arial";
+        this.ctx.textAlign = "center";
+        
+        // Store button data for click handling
+        if (!this.speedButtons) {
+            this.speedButtons = [];
+        } else {
+            this.speedButtons.length = 0;
+        }
+        
+        for (let i = 0; i < speedOptions.length; i++) {
+            const x = startX + (i * (buttonWidth + buttonGap));
+            const option = speedOptions[i];
+            const isSelected = this.settings.movementSpeed === option.key;
+            
+            // Store button area for click detection
+            this.speedButtons.push({
+                x: x,
+                y: y,
+                width: buttonWidth,
+                height: buttonHeight,
+                value: option.key
+            });
+            
+            // Draw button background
+            this.ctx.fillStyle = isSelected ? "#4CAF50" : "#555555";
+            this.ctx.fillRect(x, y, buttonWidth, buttonHeight);
+            
+            // Draw button border
+            this.ctx.strokeStyle = isSelected ? "#FFFFFF" : "#888888";
+            this.ctx.lineWidth = isSelected ? 2 : 1;
+            this.ctx.strokeRect(x, y, buttonWidth, buttonHeight);
+            
+            // Draw button text
+            this.ctx.fillStyle = "white";
+            this.ctx.fillText(option.label, x + buttonWidth / 2, y + buttonHeight / 2 + 6);
+        }
     }
 
     /**
@@ -873,6 +946,34 @@ class Game {
      */
     isMobileDevice() {
         return /iPhone|iPad|iPod|Android|webOS|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+    }
+
+    /**
+     * Get the current movement speed value in milliseconds
+     * @returns {number} - Movement duration in milliseconds
+     */
+    getMovementDuration() {
+        return PHYSICS.MOVEMENT_SPEEDS[this.settings.movementSpeed];
+    }
+
+    /**
+     * Set the movement speed to a new value
+     * @param {string} speedSetting - One of: 'SLOW', 'NORMAL', 'FAST', 'VERY_FAST'
+     */
+    setMovementSpeed(speedSetting) {
+        if (PHYSICS.MOVEMENT_SPEEDS[speedSetting]) {
+            this.settings.movementSpeed = speedSetting;
+            
+            // If player exists, update its movement duration
+            if (this.player) {
+                this.player.movementDuration = this.getMovementDuration();
+            }
+            
+            // If boxes exist, update their movement duration
+            if (this.boxes) {
+                this.boxes.movementDuration = this.getMovementDuration();
+            }
+        }
     }
 }
 

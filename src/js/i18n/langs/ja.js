@@ -35,7 +35,14 @@ export default {
     on: "オン",
     off: "オフ",
     paused: "一時停止中",
-    resumeHint: "ESCキーまたはPキーで再開"
+    resumeHint: "ESCキーまたはPキーで再開",
+    movementSpeed: "移動速度"
+  },
+  speeds: {
+    slow: "遅い",
+    normal: "普通",
+    fast: "速い",
+    veryFast: "超速い"
   },
   loading: {
     title: "ロード中",
