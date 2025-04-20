@@ -1,0 +1,397 @@
+// Sokoban game styles
+// Main SCSS file for styling the Sokoban game UI
+@use "sass:color";
+
+// ==========================================================================
+// Variables & Configuration
+// ==========================================================================
+
+// Color variables
+$background-color: #121212;
+$canvas-background: #25131a;
+$border-color: #222;
+$text-color: #fff;
+$accent-color: #ffaa00;
+$button-bg: rgba(255, 255, 255, 0.7);
+$button-active-bg: rgba(255, 255, 255, 0.9);
+
+// Typography
+$font-primary: Arial, sans-serif;
+$font-size-base: 16px;
+$font-size-large: 24px;
+$font-size-small: 14px;
+
+// Spacing
+$spacing-xs: 0.5rem;
+$spacing-sm: 1rem;
+$spacing-md: 2rem;
+$spacing-lg: 3rem;
+
+// Breakpoints
+$breakpoint-mobile: 600px;
+$breakpoint-tablet: 900px;
+
+// ==========================================================================
+// Mixins
+// ==========================================================================
+
+// Box shadow - vendor prefixes removed as they're no longer needed in modern browsers
+@mixin box-shadow($shadow...) {
+  box-shadow: $shadow;
+}
+
+// Flexbox center alignment
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// Absolute center positioning
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// Text shadow for better visibility
+@mixin text-shadow($intensity: 'medium') {
+  @if $intensity == 'light' {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  } @else if $intensity == 'medium' {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  } @else if $intensity == 'strong' {
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+  }
+}
+
+// Button styling mixin
+@mixin button-style($bg-color, $text-color, $padding-x: 1rem, $padding-y: 0.5rem) {
+  background: $bg-color;
+  color: $text-color;
+  padding: $padding-y $padding-x;
+  border-radius: 8px;
+  border: 1px solid color.adjust($bg-color, $lightness: -15%);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: color.adjust($bg-color, $lightness: 5%);
+  }
+  
+  &:active {
+    transform: translateY(2px);
+    @include box-shadow(inset 0 2px 4px rgba(0, 0, 0, 0.3));
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba($accent-color, 0.5);
+  }
+}
+
+// ==========================================================================
+// Base Styles
+// ==========================================================================
+
+// General body styling
+body {
+  background: $background-color;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  @include flex-center;
+  font-family: $font-primary;
+  font-size: $font-size-base;
+  color: $text-color;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// ==========================================================================
+// Game Layout & Components
+// ==========================================================================
+
+// Main content container
+#mainContent {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+// Main canvas styling
+#mainCanvas {
+  border: solid 1px $border-color;
+  @include box-shadow(1px 1px 10px 10px $border-color);
+  border-radius: 1rem;
+  background: $canvas-background;
+  width: 100%;
+  max-width: 960px;
+  max-height: 100vh;
+  display: block;
+  // Using the standard property with fallbacks for cross-browser support
+  image-rendering: -webkit-optimize-contrast; // Chrome specific
+  image-rendering: -moz-crisp-edges;          // Firefox specific
+  image-rendering: pixelated;                 // Modern standard
+}
+
+// Loading text styling
+#loadingText {
+  @include absolute-center;
+  color: $text-color;
+  font-size: $font-size-large;
+  @include text-shadow('medium');
+  z-index: 10;
+  transition: opacity 0.5s ease;
+}
+
+// Game level indicator
+.level-indicator {
+  position: absolute;
+  top: $spacing-sm;
+  left: $spacing-sm;
+  font-size: $font-size-small;
+  color: $text-color;
+  background-color: rgba($background-color, 0.7);
+  padding: $spacing-xs;
+  border-radius: 4px;
+  z-index: 15;
+  @include text-shadow('light');
+}
+
+// Score display
+.score-display {
+  position: absolute;
+  top: $spacing-sm;
+  right: $spacing-sm;
+  background-color: rgba($background-color, 0.7);
+  padding: $spacing-xs;
+  border-radius: 4px;
+  z-index: 15;
+  
+  .score-item {
+    display: inline-block;
+    margin-left: $spacing-sm;
+    font-size: $font-size-small;
+    color: $text-color;
+    
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+}
+
+// Virtual arrow controls for mobile
+#virtualArrows {
+  position: absolute;
+  right: $spacing-sm;
+  bottom: $spacing-md;
+  background: rgba(0, 0, 0, 0.5);
+  padding: $spacing-sm;
+  border-radius: 50%;
+  @include box-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+  touch-action: none;
+  z-index: 20;
+}
+
+// Game menu overlay
+.game-menu {
+  @include absolute-center;
+  background-color: rgba($background-color, 0.9);
+  padding: $spacing-md;
+  border-radius: 1rem;
+  z-index: 30;
+  min-width: 300px;
+  @include box-shadow(0 0 20px rgba(0, 0, 0, 0.5));
+  
+  h2 {
+    color: $accent-color;
+    margin-top: 0;
+  }
+  
+  p {
+    margin: $spacing-sm 0;
+  }
+  
+  .button-group {
+    margin-top: $spacing-md;
+    display: flex;
+    justify-content: center;
+    gap: $spacing-sm;
+  }
+}
+
+// Button styling
+button {
+  width: 3.5rem;
+  margin: 0.2rem;
+  aspect-ratio: 4/3;
+  @include button-style($button-bg, #333);
+  font-size: 1.2rem;
+  font-weight: bold;
+  @include box-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  
+  &:active {
+    background: $button-active-bg;
+    @include box-shadow(inset 0 2px 4px rgba(0, 0, 0, 0.5));
+    transform: translateY(2px);
+  }
+}
+
+// Primary action button
+.btn-primary {
+  @include button-style($accent-color, $text-color);
+  font-weight: bold;
+  padding: $spacing-xs $spacing-md;
+}
+
+// Secondary action button
+.btn-secondary {
+  @include button-style(rgba(255, 255, 255, 0.2), $text-color);
+  padding: $spacing-xs $spacing-md;
+}
+
+// Win message styling
+.win-message {
+  @include absolute-center;
+  background-color: rgba($background-color, 0.9);
+  color: $accent-color;
+  padding: $spacing-md;
+  border-radius: 1rem;
+  text-align: center;
+  z-index: 30;
+  @include box-shadow(0 0 20px rgba(0, 0, 0, 0.7));
+  
+  h2 {
+    font-size: $font-size-large * 1.5;
+    margin-bottom: $spacing-sm;
+  }
+  
+  .stats {
+    margin: $spacing-md 0;
+    
+    .stat-item {
+      margin: $spacing-xs 0;
+    }
+  }
+}
+
+// ==========================================================================
+// Language Selector
+// ==========================================================================
+
+.language-selector {
+  position: absolute;
+  top: $spacing-sm;
+  right: $spacing-sm;
+  z-index: 100;
+  padding: $spacing-xs;
+  border-radius: 4px;
+  background-color: rgba($background-color, 0.7);
+  
+  select {
+    background-color: rgba(50, 50, 50, 0.8);
+    color: $text-color;
+    border: 1px solid color.adjust($border-color, $lightness: 10%);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: $font-size-small;
+    cursor: pointer;
+    appearance: none;
+    padding-right: 20px;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 2px center;
+    background-size: 16px;
+    
+    &:hover {
+      background-color: rgba(60, 60, 60, 0.9);
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba($accent-color, 0.5);
+    }
+    
+    option {
+      background-color: #333;
+      color: $text-color;
+    }
+  }
+}
+
+// ==========================================================================
+// Animation Classes
+// ==========================================================================
+
+// Fade in animation
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+// Pulse animation
+.pulse {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+// ==========================================================================
+// Media Queries
+// ==========================================================================
+
+// Media queries for responsive design
+@media (max-height: 700px) {
+  #mainCanvas {
+    height: 100vh;
+    width: auto;
+  }
+}
+
+// Mobile-specific styles
+@media (max-width: $breakpoint-mobile) {
+  #virtualArrows {
+    right: $spacing-xs;
+    bottom: $spacing-sm;
+    padding: 0.8rem;
+  }
+  
+  button {
+    width: 3rem;
+    margin: 0.1rem;
+    font-size: 1rem;
+  }
+  
+  .game-menu {
+    width: 80%;
+    min-width: auto;
+    padding: $spacing-sm;
+  }
+  
+  .win-message {
+    width: 80%;
+    padding: $spacing-sm;
+  }
+}
+
+// Tablet-specific styles
+@media (min-width: $breakpoint-mobile + 1) and (max-width: $breakpoint-tablet) {
+  .game-menu,
+  .win-message {
+    width: 60%;
+  }
+}

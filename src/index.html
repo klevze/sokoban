@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Sokoban - Classic puzzle game where you push boxes to storage locations">
+    <meta name="theme-color" content="#25131a">
+    <title>Sokoban</title>
+    <script type="module">
+      import './styles/main.scss'
+    </script>
+  </head>
+<body>
+
+<section id="mainContent">
+    <canvas id="mainCanvas"></canvas>
+    <!-- Loading elements created dynamically in JS -->
+    <div id="virtualArrows" hidden>
+      <button id="upButton" aria-label="Move Up">↑</button><br>
+      <button id="leftButton" aria-label="Move Left">←</button>
+      <button id="rightButton" aria-label="Move Right">→</button><br>
+      <button id="downButton" aria-label="Move Down">↓</button>
+    </div>
+</section>
+
+<script type="module" src="./js/main.js"></script>
+
+</body>
+</html>

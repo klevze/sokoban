@@ -1,0 +1,67 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+yarn.lock
+package-lock.json
+
+# Build outputs
+/dist
+/build
+/.vite
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+debug.log
+
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-workspace
+.project
+.classpath
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+*.log
+.log/
+logs/
+tmp/
+temp/
+
+# Source map files
+*.map
+
+# Compiled files
+*.min.js
+*.min.css
+
+# Local development
+.local-dev/
