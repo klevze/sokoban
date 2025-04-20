@@ -8,6 +8,8 @@ A modern implementation of the classic Sokoban puzzle game using HTML5 Canvas an
 
 Sokoban (倉庫番, "warehouse keeper") is a puzzle game where the player pushes boxes around a maze, viewed from above, and tries to put them in designated locations. The game was created in 1981 by Hiroyuki Imabayashi.
 
+![Sokoban Gameplay](src/assets/images/gameplay.webp)
+
 ## Features
 
 - **50 challenging levels** - From beginner to expert difficulty
