@@ -407,6 +407,9 @@ function handleCanvasClick(event, gameInstance) {
         const btnHeight = gameInstance.resources.images.btnPlay.image.height;
         
         if (mouseX >= btnX && mouseX <= btnX + btnWidth && mouseY >= btnY && mouseY <= btnY + btnHeight) {
+            // Stop all sounds including music when starting a new game
+            gameInstance.resources.stopAllSounds(true);
+            
             // Reset to level 1 when clicking the PLAY button
             gameInstance.setCurrentLevel(0); // Level 0 is the first level (displayed as level 1)
             gameInstance.changeLevel(0);

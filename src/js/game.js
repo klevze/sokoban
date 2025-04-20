@@ -741,7 +741,9 @@ class Game {
                 break;
             case GAME_STATES.INTRO:
                 // Stop intro music when leaving intro
+                // Make sure to completely stop the music, not just pause it
                 this.resources.sound.music.pause();
+                this.resources.sound.music.currentTime = 0;
                 break;
             case GAME_STATES.WIN:
                 // Stop victory sound
