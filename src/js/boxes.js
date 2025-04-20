@@ -7,6 +7,7 @@
  */
 import { game } from './game.js';
 import { PHYSICS } from './config/config.js';
+import { ParticleSystem } from './particles.js';
 
 /**
  * The Boxes class manages all crates/boxes in the Sokoban game
@@ -51,6 +52,12 @@ export class Boxes {
         
         // Duration for the pulse effect when box is placed on goal (in ms)
         this.pulseEffectDuration = 2000;
+        
+        // Initialize particle system for fireworks effects
+        this.particles = new ParticleSystem();
+        
+        // Last timestamp for updates (used for particle system)
+        this.lastUpdateTime = performance.now();
     }
     
     /**
@@ -315,6 +322,15 @@ export class Boxes {
                 // Play sound for box reaching goal
                 game.resources.playSound('boxOnGoal', 0.8, 0.2);
                 
+                // Trigger particle effect for box reaching goal
+                this.particles.createFireworks(
+                    this.ctx,
+                    game.level.startX + box.x * this.outputWidth + this.outputWidth / 2,
+                    game.level.startY + box.y * this.outputWidth - this.outputWidth / 2, // Position above the box
+                    50, // More particles
+                    ['#ffdd00', '#ff8800', '#ff5500', '#ff0000', '#ffff00', '#88ff00', '#00ffff', '#8800ff'] // More colors
+                );
+                
                 // Update box score after state change
                 this.updateBoxesScore();
                 return;
@@ -422,6 +438,13 @@ export class Boxes {
                 this.drawPulseEffect(box);
             }
         }
+        
+        // Update and draw particle system
+        const currentTime = performance.now();
+        const deltaTime = currentTime - this.lastUpdateTime;
+        this.lastUpdateTime = currentTime;
+        this.particles.update(deltaTime);
+        this.particles.draw(this.ctx);
     }
     
     /**
