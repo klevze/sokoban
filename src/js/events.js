@@ -161,52 +161,148 @@ function setupTouchControls(gameInstance) {
     const rightButton = document.getElementById('rightButton');
     const downButton = document.getElementById('downButton');
     const virtualArrows = document.getElementById('virtualArrows');
+    const dragHandle = virtualArrows ? virtualArrows.querySelector('.drag-handle') : null;
     
-    // Show virtual arrows on mobile devices
-    if (gameInstance.isMobileDevice() && virtualArrows) {
-        virtualArrows.removeAttribute('hidden');
+    // Initial setup for mobile devices only - keep hidden otherwise
+    if (virtualArrows) {
+        if (gameInstance.isMobileDevice()) {
+            // Only initialize arrows on mobile devices
+            updateArrowsVisibility(gameInstance.state);
+            
+            // Make the virtualArrows draggable
+            makeDraggable(virtualArrows, dragHandle);
+            
+            // Try to load position from localStorage
+            loadArrowPosition(virtualArrows);
+        } else {
+            // Ensure arrows remain hidden on desktop
+            virtualArrows.style.display = 'none';
+        }
+    }
+    
+    // Set up continuous movement handling
+    let activeDirection = null;
+    let continuousMoveInterval = null;
+    
+    // Function to update visibility of arrows based on game state
+    function updateArrowsVisibility(state) {
+        if (virtualArrows) {
+            // Only show arrows during active gameplay
+            if (state === GAME_STATES.PLAY) {
+                virtualArrows.style.display = 'block';
+                virtualArrows.style.opacity = '1';
+            } else {
+                virtualArrows.style.opacity = '0';
+                // Use a timeout to hide completely after fade out
+                setTimeout(() => {
+                    if (gameInstance.state !== GAME_STATES.PLAY) {
+                        virtualArrows.style.display = 'none';
+                    }
+                }, 300);
+            }
+        }
+    }
+    
+    // Function to start continuous movement
+    function startContinuousMovement(direction) {
+        if (continuousMoveInterval) {
+            clearInterval(continuousMoveInterval);
+        }
+        
+        activeDirection = direction;
+        
+        // Execute movement immediately
+        executeMovement(direction);
+        
+        // Set interval for continuous movement
+        continuousMoveInterval = setInterval(() => {
+            executeMovement(direction);
+        }, 200); // Adjust timing as needed for gameplay feel
+    }
+    
+    // Function to stop continuous movement
+    function stopContinuousMovement() {
+        if (continuousMoveInterval) {
+            clearInterval(continuousMoveInterval);
+            continuousMoveInterval = null;
+        }
+        activeDirection = null;
+        
+        // Remove the active class from all buttons
+        if (upButton) upButton.classList.remove('active');
+        if (leftButton) leftButton.classList.remove('active');
+        if (rightButton) rightButton.classList.remove('active');
+        if (downButton) downButton.classList.remove('active');
+    }
+    
+    // Function to execute the movement in the given direction
+    function executeMovement(direction) {
+        if (gameInstance.player && !gameInstance.player.isMoving && 
+            gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
+            switch(direction) {
+                case 'up': gameInstance.player.move(0, -1); break;
+                case 'left': gameInstance.player.move(-1, 0); break;
+                case 'right': gameInstance.player.move(1, 0); break;
+                case 'down': gameInstance.player.move(0, 1); break;
+            }
+        }
     }
     
     // Add touch event listeners to the directional buttons
     if (upButton) {
         upButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (gameInstance.player && !gameInstance.player.isMoving && 
-                gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
-                gameInstance.player.move(0, -1);
-            }
+            upButton.classList.add('active');
+            startContinuousMovement('up');
+        });
+        
+        upButton.addEventListener('touchend', () => {
+            upButton.classList.remove('active');
+            stopContinuousMovement();
         });
     }
     
     if (leftButton) {
         leftButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (gameInstance.player && !gameInstance.player.isMoving && 
-                gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
-                gameInstance.player.move(-1, 0);
-            }
+            leftButton.classList.add('active');
+            startContinuousMovement('left');
+        });
+        
+        leftButton.addEventListener('touchend', () => {
+            leftButton.classList.remove('active');
+            stopContinuousMovement();
         });
     }
     
     if (rightButton) {
         rightButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (gameInstance.player && !gameInstance.player.isMoving && 
-                gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
-                gameInstance.player.move(1, 0);
-            }
+            rightButton.classList.add('active');
+            startContinuousMovement('right');
+        });
+        
+        rightButton.addEventListener('touchend', () => {
+            rightButton.classList.remove('active');
+            stopContinuousMovement();
         });
     }
     
     if (downButton) {
         downButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (gameInstance.player && !gameInstance.player.isMoving && 
-                gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
-                gameInstance.player.move(0, 1);
-            }
+            downButton.classList.add('active');
+            startContinuousMovement('down');
+        });
+        
+        downButton.addEventListener('touchend', () => {
+            downButton.classList.remove('active');
+            stopContinuousMovement();
         });
     }
+    
+    // Make sure to stop continuous movement if we leave the game area
+    mainCanvas.addEventListener('touchstart', stopContinuousMovement);
     
     // Create game control buttons container
     const controlsContainer = document.createElement('div');
@@ -340,7 +436,7 @@ function setupTouchControls(gameInstance) {
         document.body.appendChild(controlsContainer);
     }
     
-    // Set up state change observer to show/hide buttons
+    // Set up state change observer to show/hide buttons and arrows
     const originalSetState = gameInstance.setState;
     gameInstance.setState = function(newState) {
         const result = originalSetState.call(this, newState);
@@ -348,8 +444,12 @@ function setupTouchControls(gameInstance) {
         // Show controls only in PLAY state
         if (newState === GAME_STATES.PLAY) {
             controlsContainer.style.opacity = '1';
+            // Show virtual arrows in PLAY state
+            updateArrowsVisibility(newState);
         } else {
             controlsContainer.style.opacity = '0';
+            // Hide virtual arrows in other states
+            updateArrowsVisibility(newState);
         }
         
         return result;
@@ -363,6 +463,137 @@ function setupTouchControls(gameInstance) {
             handleCanvasClick(e, gameInstance);
         }
     });
+}
+
+/**
+ * Makes an element draggable
+ * @param {HTMLElement} element - The element to make draggable
+ * @param {HTMLElement} handle - Optional drag handle element (if null, the entire element is draggable)
+ */
+function makeDraggable(element, handle = null) {
+    if (!element) return;
+    
+    const dragHandle = handle || element;
+    let isDragging = false;
+    let initialX, initialY, initialLeft, initialTop;
+    
+    // Touch events for mobile
+    dragHandle.addEventListener('touchstart', startDrag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('touchend', endDrag);
+    
+    // Mouse events for desktop (for testing)
+    dragHandle.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', endDrag);
+    
+    function startDrag(e) {
+        if (e.type === 'mousedown' && e.button !== 0) return; // Only left mouse button
+        
+        e.preventDefault();
+        
+        // Get the initial position
+        const touch = e.touches ? e.touches[0] : e;
+        initialX = touch.clientX;
+        initialY = touch.clientY;
+        
+        // Get the current position of the element
+        const rect = element.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        
+        // Highlight the drag handle to indicate dragging
+        dragHandle.style.color = '#ffd700';
+        dragHandle.style.textShadow = '0 0 5px #ffd700';
+        
+        isDragging = true;
+    }
+    
+    function drag(e) {
+        if (!isDragging) return;
+        
+        e.preventDefault();
+        
+        // Calculate the new position
+        const touch = e.touches ? e.touches[0] : e;
+        const deltaX = touch.clientX - initialX;
+        const deltaY = touch.clientY - initialY;
+        
+        // Update the position
+        element.style.left = `${initialLeft + deltaX}px`;
+        element.style.top = `${initialTop + deltaY}px`;
+    }
+    
+    function endDrag() {
+        if (!isDragging) return;
+        
+        isDragging = false;
+        
+        // Reset drag handle styling
+        if (dragHandle) {
+            dragHandle.style.color = '#ffd700';
+            dragHandle.style.textShadow = '0 1px 2px rgba(0,0,0,0.8)';
+        }
+        
+        // Save the position to localStorage
+        saveArrowPosition(element);
+    }
+}
+
+/**
+ * Saves the arrow controls position to localStorage
+ * @param {HTMLElement} element - The element to save position for
+ */
+function saveArrowPosition(element) {
+    if (!element) return;
+    
+    const rect = element.getBoundingClientRect();
+    
+    try {
+        // Store position as percentage of viewport width/height
+        const data = {
+            posX: rect.left / window.innerWidth,
+            posY: rect.top / window.innerHeight
+        };
+        
+        localStorage.setItem('sokoban_arrows_position', JSON.stringify(data));
+    } catch (err) {
+        console.warn('Could not save arrow position to localStorage', err);
+    }
+}
+
+/**
+ * Loads the arrow controls position from localStorage
+ * @param {HTMLElement} element - The element to update position for
+ */
+function loadArrowPosition(element) {
+    if (!element) return;
+    
+    try {
+        const data = JSON.parse(localStorage.getItem('sokoban_arrows_position'));
+        
+        if (data && data.posX !== undefined && data.posY !== undefined) {
+            // Convert percentage position back to pixels
+            const posX = data.posX * window.innerWidth;
+            const posY = data.posY * window.innerHeight;
+            
+            // Ensure the element isn't positioned off-screen
+            const maxX = window.innerWidth - 100;
+            const maxY = window.innerHeight - 100;
+            const x = Math.max(0, Math.min(posX, maxX));
+            const y = Math.max(0, Math.min(posY, maxY));
+            
+            // Apply the position with fixed positioning to ensure proper dragging
+            element.style.position = 'fixed';
+            element.style.left = `${x}px`;
+            element.style.top = `${y}px`;
+            // Clear any default right/bottom positioning that might interfere
+            element.style.right = 'auto';
+            element.style.bottom = 'auto';
+        }
+    } catch (err) {
+        console.warn('Could not load arrow position from localStorage', err);
+    }
 }
 
 function handleCanvasClick(event, gameInstance) {
@@ -1017,7 +1248,7 @@ function showSettingsDialog(gameInstance) {
     
     // 1. Back to home (main menu) button
     const homeButton = createWoodenButton(
-        gameInstance.resources.images.ACTION_HOME && gameInstance.resources.images.ACTION_HOME.image ? 
+        gameInstance.resources.images.ACTION_HOME && gameInstance.resources.ACTION_HOME.image ? 
         (() => {
             const img = new Image();
             img.src = gameInstance.resources.images.ACTION_HOME.image.src;
@@ -1035,7 +1266,7 @@ function showSettingsDialog(gameInstance) {
     
     // 2. Level select button
     const levelSelectButton = createWoodenButton(
-        gameInstance.resources.images.ACTION_LEVEL && gameInstance.resources.images.ACTION_LEVEL.image ? 
+        gameInstance.resources.images.ACTION_LEVEL && gameInstance.resources.ACTION_LEVEL.image ? 
         (() => {
             const img = new Image();
             img.src = gameInstance.resources.images.ACTION_LEVEL.image.src;
@@ -1050,7 +1281,7 @@ function showSettingsDialog(gameInstance) {
     
     // 3. Restart button
     const restartButton = createWoodenButton(
-        gameInstance.resources.images.ACTION_RESTART && gameInstance.resources.images.ACTION_RESTART.image ? 
+        gameInstance.resources.images.ACTION_RESTART && gameInstance.resources.ACTION_RESTART.image ? 
         (() => {
             const img = new Image();
             img.src = gameInstance.resources.images.ACTION_RESTART.image.src;

@@ -17,6 +17,21 @@ import { CANVAS } from './config/config.js';
 import { game } from './game.js';
 
 /**
+ * Register service worker for PWA functionality
+ */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./js/service-worker.js')
+            .then(registration => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(error => {
+                console.error('ServiceWorker registration failed: ', error);
+            });
+    });
+}
+
+/**
  * Initialize the game when the DOM is fully loaded
  * Sets up the canvas with dimensions from configuration
  */

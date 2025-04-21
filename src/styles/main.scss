@@ -186,17 +186,128 @@ body {
   }
 }
 
+// Utility class to hide elements on desktop
+.desktop-hide {
+  @media (hover: hover) and (pointer: fine) {
+    display: none !important;
+  }
+}
+
 // Virtual arrow controls for mobile
 #virtualArrows {
   position: absolute;
   right: $spacing-sm;
   bottom: $spacing-md;
-  background: rgba(0, 0, 0, 0.5);
-  padding: $spacing-sm;
-  border-radius: 50%;
-  @include box-shadow(0 0 10px rgba(255, 255, 255, 0.2));
-  touch-action: none;
+  background: rgba(0, 0, 0, 0.4);
+  padding: $spacing-xs;
+  border-radius: 12px;
+  @include box-shadow(0 2px 10px rgba(255, 255, 255, 0.15));
+  touch-action: none; // Prevent scrolling when touching the controls
+  user-select: none; // Prevent text selection
   z-index: 20;
+  transition: transform 0.2s ease, opacity 0.3s ease;
+  backdrop-filter: blur(2px);
+  border: 2px solid rgba(101, 67, 33, 0.6);
+  max-width: 180px;
+  
+  // Hide on desktop using feature query
+  @media (hover: hover) and (pointer: fine) {
+    display: none !important;
+  }
+  
+  // Drag handle for repositioning
+  .drag-handle {
+    text-align: center;
+    padding: 2px 0;
+    margin-bottom: 4px;
+    cursor: move;
+    font-size: 16px;
+    color: #ffd700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+  
+  .controls-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+  
+  .middle-row {
+    display: flex;
+    justify-content: center;
+    gap: $spacing-xs;
+    width: 100%;
+  }
+  
+  .arrow-btn {
+    width: 50px;
+    height: 50px;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #8B4513;
+    background-image: linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.1) 100%);
+    color: #faf0dc;
+    border: 2px solid #3a2214;
+    border-radius: 12px;
+    font-size: 24px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease-in-out;
+    padding: 0;
+    
+    &:active, &.active {
+      transform: scale(0.9);
+      background-color: #9B5523;
+      border-color: #ffd700;
+      box-shadow: 0 0 8px #ffd700;
+    }
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    }
+    
+    .arrow-icon {
+      display: block;
+      font-weight: bold;
+      position: relative;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    }
+    
+    &.up-btn .arrow-icon {
+      transform: translateY(-2px);
+    }
+    
+    &.down-btn .arrow-icon {
+      transform: translateY(2px);
+    }
+    
+    &.left-btn .arrow-icon {
+      transform: translateX(-2px);
+    }
+    
+    &.right-btn .arrow-icon {
+      transform: translateX(2px);
+    }
+  }
+  
+  // Add wood texture effect for buttons
+  .arrow-btn::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAACXBIWXMAAAsTAAALEwEAmpwYAAAGcklEQVRogd2Ze4xU1R3HP+fce2d2Z3ZmdnbZXRaWxyLLAgsIVUAeFVRqrY1UreKjNWpjTBOT2qRNm5jGpIlp0z+M/tOm2j+axBcaU2ubGKU0AcQICCzyWHkJu7DPnZmdx713zun5Y2bWYXcG2GVJ25NM7r3nnnPu+X7P93ce91zhvXcjkS2rq8pdAVQAZcAicD4oXdBKad0HSnUL2n6p+g4K0XeyuVhkYnw0pS0hjTTGTWVZdiKRsMbFma5GVgghPS0NAduDOIrgX0ACuKOWthzjOG5ip4wcSovQB47tpHKpxGRR1BxJJ9OReCRRGo0lymMl0VhJSbQkURqLlcRjprCafb9CiEBrmbdcN5/P5/Op/tNnzqT6T59O9acO95/qP3WwNzlwsr83eainJ2mFQ9OCaaHoW0D8VhakadVWY5mPbf/xJV9UBct20tlsdvhPn7z19yK4xWRz2WxmMJ0ZHEz3DAx0Hzvd3dfb03usNxk/cirR0ZP0fQ0DGWAI0EPim7qgw+9fdcGeRCLRC4wfrBSl0fg7mqlGULn2pw+QvG8W5tgjv8xeuuc75TXL1t+2aOXytcuuvq5+XmNjrLy83MTj8ZF2y7KwLGukPB6Po5QayT548CDd3d0opVBKYZrmSP6FF15gYGAA27YH0umB0z09XX39vb3HDu9/Y9eO5175675jyf7+U6Sf/s9nkB8BdwJGUwPXArUlJSVvao36H8Jcssywr3pHvat5GVJolEcV23pPsjfVzerlK9ZvvPPOzZvuvvtLVVVVAJw5c4Zdu3axceNGHnroIXbv3k1HRwdbtmzh+eefp7W1lWw2S01NDY899hh79+7l8OHDRCIRUqkUe/bsoauri5dffpm2tjba29tpbW3lxIkT9Pf309zczGeffcauXbtQSnHDDTdACOIO1WUV9TNrquaPr6mpb/nRxvvbWrc+8cRAf//uaDSaB14D7r5o4tbWp7WOXK9UuE55YanvqHAICHpUEFJGG2W+xMpmSw8eOlS5ePHijtbW1ur169d/SgghJmMsy7J49dVXaWlpYd26dcRiMRobG9m0aRNSSnzf54knnmDZsmUsWbKE+vr6i+p4nocQAikl0WiUTCZDNpvFsqzRVW0AKmvnzO+89rqbv+oqb8+OHc88q0P+KWAvsPWixhYsf0jp0GMhKavCICwlQh4JIFSIRhkuVVqDDNMXFr6QQDhE1YJG1qxZF7py+bWHo/HYqffee+8BoJcJmu/o6KC9vZ1Dhw7xzjvvMGfOHKLRKAsWLKCrq4uXXnqJpUuX0tTUdNE9IoLBYOS6bDZLNBolEolQW1tLbW0tpaWlRCIRotEoAIlEAuBureMaeKWtrYVkMvkI8PkYgSsvX6NV+OsqFFoWsiKADIeeEBLTMAgplEQThijUwgWFOkCCgEhpKUvXrBvZB5578smvCxh5GjHexPz581m5ciX79+9n586drFq1iubmZjZs2MDLL7/Mtm3buP7668dxETQ1NVFXV8cHH3xAc3MzK1euxDRNysrKsCyL6upq2tvb2b59O/F4nLq6OpYvX85dd93FwMAAP3nsMUIi9Bcz4JjneXfbtn2fl8/PURZJgcQQEoEAIYiFAizTwDYNQqEQQmvkBfLTQRuCvONy7mwnuYIoKYlYtsvJfDabvf2tt95qA45dxAzgnnvuYcuWLbS3t7Nt2zYmQ319Pa+//jpt...'); 
+    background-size: 100% 100%;
+    opacity: 0.2;
+    border-radius: 10px;
+    pointer-events: none;
+  }
 }
 
 // Game menu overlay

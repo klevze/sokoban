@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="Sokoban - Classic puzzle game where you push boxes to storage locations">
     <meta name="theme-color" content="#25131a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Sokoban">
+    <meta name="application-name" content="Sokoban">
     <link rel="icon" type="image/png" href="/assets/favicon/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/assets/favicon/favicon.svg" />
     <link rel="shortcut icon" href="/assets/favicon/favicon.ico" />
@@ -19,12 +23,25 @@
 
 <section id="mainContent">
     <canvas id="mainCanvas"></canvas>
-    <!-- Loading elements created dynamically in JS -->
-    <div id="virtualArrows" hidden>
-      <button id="upButton" aria-label="Move Up">↑</button><br>
-      <button id="leftButton" aria-label="Move Left">←</button>
-      <button id="rightButton" aria-label="Move Right">→</button><br>
-      <button id="downButton" aria-label="Move Down">↓</button>
+    <!-- Mobile controls - Hidden by default, shown on mobile devices -->
+    <div id="virtualArrows" class="desktop-hide" hidden>
+      <div class="drag-handle" title="Hold to move controls">⋮⋮</div>
+      <div class="controls-container">
+        <button id="upButton" class="arrow-btn up-btn" aria-label="Move Up">
+          <span class="arrow-icon">↑</span>
+        </button>
+        <div class="middle-row">
+          <button id="leftButton" class="arrow-btn left-btn" aria-label="Move Left">
+            <span class="arrow-icon">←</span>
+          </button>
+          <button id="rightButton" class="arrow-btn right-btn" aria-label="Move Right">
+            <span class="arrow-icon">→</span>
+          </button>
+        </div>
+        <button id="downButton" class="arrow-btn down-btn" aria-label="Move Down">
+          <span class="arrow-icon">↓</span>
+        </button>
+      </div>
     </div>
 </section>
 

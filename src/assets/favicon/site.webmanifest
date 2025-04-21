@@ -3,19 +3,26 @@
   "short_name": "Sokoban",
   "icons": [
     {
-      "src": "/assets/favicon/web-app-manifest-192x192.png",
+      "src": "./assets/favicon/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/assets/favicon/web-app-manifest-512x512.png",
+      "src": "./assets/favicon/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
+  "start_url": "./index.html",
   "theme_color": "#000000",
   "background_color": "#000000",
-  "display": "standalone"
+  "display": "standalone",
+  "orientation": "any",
+  "description": "Classic Sokoban puzzle game",
+  "scope": "./",
+  "lang": "en",
+  "prefer_related_applications": false,
+  "categories": ["games", "entertainment", "puzzle"]
 }

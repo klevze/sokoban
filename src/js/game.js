@@ -228,14 +228,44 @@ class Game {
         // Initial sizing
         this._resizeCanvas();
         
-        // Add resize event listener
+        // Add resize event listener with debounce for better performance
+        let resizeTimeout;
         window.addEventListener('resize', () => {
-            this._resizeCanvas();
-            
-            // Reinitialize level positions if game is already running
-            if (this.level) {
-                this.level.initLevel();
+            // Clear previous timeout to prevent multiple rapid executions
+            if (resizeTimeout) {
+                clearTimeout(resizeTimeout);
             }
+            
+            // Set a timeout to avoid excessive updates during resize
+            resizeTimeout = setTimeout(() => {
+                this._resizeCanvas();
+                
+                // Reinitialize level positions if game is already running
+                if (this.level) {
+                    this.level.initLevel();
+                    
+                    // Reinitialize player and boxes positions to match new layout
+                    if (this.player) {
+                        this.player.outputWidth = this.level.outputWidth;
+                        this.player.pixelPos = { ...this.player.coord }; // Reset pixel positions
+                    }
+                    
+                    if (this.boxes) {
+                        this.boxes.outputWidth = this.level.outputWidth;
+                        // Reset all boxes' pixel positions
+                        for (const box of this.boxes.boxes) {
+                            box.pixelPos = { ...box.coord };
+                        }
+                    }
+                    
+                    if (this.goal) {
+                        this.goal.outputWidth = this.level.outputWidth;
+                    }
+                    
+                    // Ensure proper redraw
+                    this.draw();
+                }
+            }, 250); // 250ms debounce time
         });
     }
     
@@ -982,7 +1012,19 @@ class Game {
      * @returns {boolean} - True if mobile device
      */
     isMobileDevice() {
-        return /iPhone|iPad|iPod|Android|webOS|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+        // More reliable detection using both user agent and touch capability
+        const hasTouchScreen = (
+            ('maxTouchPoints' in navigator && navigator.maxTouchPoints > 0) ||
+            ('msMaxTouchPoints' in navigator && navigator.msMaxTouchPoints > 0) ||
+            (window.matchMedia && window.matchMedia('(pointer:coarse)').matches)
+        );
+        
+        const isMobileUserAgent = /iPhone|iPad|iPod|Android|webOS|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+        
+        // For it to be considered a mobile device, it should have touch capability 
+        // AND either have a mobile user agent OR have a small screen width
+        const isSmallScreen = window.innerWidth <= 768;
+        return hasTouchScreen && (isMobileUserAgent || isSmallScreen);
     }
 
     /**
