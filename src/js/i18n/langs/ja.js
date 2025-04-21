@@ -9,22 +9,23 @@ export default {
     selectLevel: "レベル選択",
     settings: "設定",
     help: "ヘルプ",
-    about: "情報"
+    about: "情報",
+    play: "プレイ"
   },
   game: {
     level: "レベル",
     moves: "歩数",
-    pushes: "押し回数",
+    pushes: "押す回数",
     time: "時間",
     restart: "レベルをやり直す",
     undo: "元に戻す",
     completed: "レベルクリア！",
-    nextLevel: "スペースキーで次へ進む",
+    nextLevel: "スペースキーを押して続ける",
     victory: "おめでとう！",
-    allLevelsComplete: "おめでとう！全レベルクリアしました！",
+    allLevelsComplete: "おめでとう！すべてのレベルをクリアしました！",
     confirmExit: "メインメニューに戻りますか？",
-    confirmRestart: "このレベルをやり直しますか？",
-    loading: "ロード中..."
+    confirmRestart: "このレベルを本当にやり直しますか？",
+    loading: "読み込み中..."
   },
   settings: {
     language: "言語",
@@ -36,29 +37,39 @@ export default {
     off: "オフ",
     paused: "一時停止中",
     resumeHint: "ESCキーまたはPキーで再開",
-    movementSpeed: "移動速度"
+    movementSpeed: "移動速度",
+    playerSpeed: "プレイヤー速度",
+    slowSpeed: "遅い",
+    normalSpeed: "普通",
+    fastSpeed: "速い",
+    veryFastSpeed: "とても速い",
+    musicOn: "音楽オン",
+    musicOff: "音楽オフ",
+    navigation: "ナビゲーション"
   },
   speeds: {
     slow: "遅い",
     normal: "普通",
     fast: "速い",
-    veryFast: "超速い"
+    veryFast: "とても速い"
   },
   loading: {
-    title: "ロード中",
-    preparing: "スペースキーでゲームを開始",
-    loading: "ロード中"
+    title: "読み込み中",
+    preparing: "スペースキーを押してゲームを読み込む",
+    loading: "読み込み中"
   },
   error: {
-    loading: "ゲームリソースの読み込みエラー。ページを更新してください。"
+    loading: "ゲームリソースの読み込み中にエラーが発生しました。ページを更新してください。"
   },
   buttons: {
     play: "プレイ",
     home: "ホーム",
     levelSelect: "レベル選択",
-    restart: "リスタート",
-    toggleMusic: "音楽オン/オフ",
+    restart: "再スタート",
+    toggleMusic: "音楽の切り替え",
     pause: "一時停止",
-    close: "閉じる"
+    close: "閉じる",
+    settings: "設定",
+    undo: "元に戻す"
   }
 };

@@ -163,42 +163,50 @@ function setupTouchControls(gameInstance) {
     const virtualArrows = document.getElementById('virtualArrows');
     
     // Show virtual arrows on mobile devices
-    if (gameInstance.isMobileDevice()) {
+    if (gameInstance.isMobileDevice() && virtualArrows) {
         virtualArrows.removeAttribute('hidden');
     }
     
     // Add touch event listeners to the directional buttons
-    upButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (gameInstance.player && !gameInstance.player.isMoving && 
-            gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
-            gameInstance.player.move(0, -1);
-        }
-    });
+    if (upButton) {
+        upButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameInstance.player && !gameInstance.player.isMoving && 
+                gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
+                gameInstance.player.move(0, -1);
+            }
+        });
+    }
     
-    leftButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (gameInstance.player && !gameInstance.player.isMoving && 
-            gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
-            gameInstance.player.move(-1, 0);
-        }
-    });
+    if (leftButton) {
+        leftButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameInstance.player && !gameInstance.player.isMoving && 
+                gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
+                gameInstance.player.move(-1, 0);
+            }
+        });
+    }
     
-    rightButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (gameInstance.player && !gameInstance.player.isMoving && 
-            gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
-            gameInstance.player.move(1, 0);
-        }
-    });
+    if (rightButton) {
+        rightButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameInstance.player && !gameInstance.player.isMoving && 
+                gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
+                gameInstance.player.move(1, 0);
+            }
+        });
+    }
     
-    downButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (gameInstance.player && !gameInstance.player.isMoving && 
-            gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
-            gameInstance.player.move(0, 1);
-        }
-    });
+    if (downButton) {
+        downButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameInstance.player && !gameInstance.player.isMoving && 
+                gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
+                gameInstance.player.move(0, 1);
+            }
+        });
+    }
     
     // Create game control buttons container
     const controlsContainer = document.createElement('div');
@@ -213,114 +221,78 @@ function setupTouchControls(gameInstance) {
     controlsContainer.style.opacity = '0'; // Start hidden
     controlsContainer.style.transition = 'opacity 0.3s';
     
-    // Add back to menu button using image asset
-    const backToMenuButton = document.createElement('button');
-    backToMenuButton.id = 'menu-button';
-    backToMenuButton.title = gameInstance.resources.i18n.get('buttons.home');
+    // Ensure resources are loaded before accessing images
+    if (!gameInstance.resources || !gameInstance.resources.images) {
+        console.warn('Game resources not fully loaded yet');
+        return;
+    }
     
-    const homeImage = new Image();
-    homeImage.src = gameInstance.resources.images.ACTION_HOME.image.src;
-    homeImage.alt = 'Home';
-    homeImage.style.width = '100%';
-    homeImage.style.height = '100%';
-    homeImage.style.objectFit = 'contain';
-    backToMenuButton.appendChild(homeImage);
+    // Add undo button using image asset
+    const undoButton = document.createElement('button');
+    undoButton.id = 'undo-button';
+    undoButton.title = gameInstance.resources.i18n.get('buttons.undo') || 'Undo Move';
     
-    backToMenuButton.style.padding = '6px';
-    backToMenuButton.style.backgroundColor = 'transparent';
-    backToMenuButton.style.border = 'none';
-    backToMenuButton.style.borderRadius = '50%';
-    backToMenuButton.style.cursor = 'pointer';
-    backToMenuButton.style.width = '48px';
-    backToMenuButton.style.height = '48px';
+    // Check if the UNDO image is loaded
+    if (gameInstance.resources.images.ACTION_UNDO && gameInstance.resources.images.ACTION_UNDO.image) {
+        const undoImage = new Image();
+        undoImage.src = gameInstance.resources.images.ACTION_UNDO.image.src;
+        undoImage.alt = 'Undo';
+        undoImage.style.width = '100%';
+        undoImage.style.height = '100%';
+        undoImage.style.objectFit = 'contain';
+        undoButton.appendChild(undoImage);
+    } else {
+        undoButton.textContent = '↩️';
+        console.warn('ACTION_UNDO image not loaded');
+    }
     
-    backToMenuButton.addEventListener('click', () => {
-        const confirmed = window.confirm(gameInstance.resources.i18n.get('game.confirmExit') || "Return to main menu?");
-        if (confirmed) {
-            gameInstance.setState(GAME_STATES.INTRO);
+    undoButton.style.padding = '6px';
+    undoButton.style.backgroundColor = 'transparent';
+    undoButton.style.border = 'none';
+    undoButton.style.borderRadius = '50%';
+    undoButton.style.cursor = 'pointer';
+    undoButton.style.width = '48px';
+    undoButton.style.height = '48px';
+    
+    undoButton.addEventListener('click', () => {
+        if (gameInstance.player && gameInstance.state === GAME_STATES.PLAY) {
+            gameInstance.player.undo();
         }
     });
     
-    // Add level select button using image asset
-    const levelSelectButton = document.createElement('button');
-    levelSelectButton.id = 'level-select-button';
-    levelSelectButton.title = gameInstance.resources.i18n.get('buttons.levelSelect');
+    // Add settings button using image asset
+    const settingsButton = document.createElement('button');
+    settingsButton.id = 'settings-button';
+    settingsButton.title = gameInstance.resources.i18n.get('buttons.settings') || 'Settings';
     
-    const levelImage = new Image();
-    levelImage.src = gameInstance.resources.images.ACTION_LEVEL.image.src;
-    levelImage.alt = 'Level Select';
-    levelImage.style.width = '100%';
-    levelImage.style.height = '100%';
-    levelImage.style.objectFit = 'contain';
-    levelSelectButton.appendChild(levelImage);
-    
-    levelSelectButton.style.padding = '6px';
-    levelSelectButton.style.backgroundColor = 'transparent';
-    levelSelectButton.style.border = 'none';
-    levelSelectButton.style.borderRadius = '50%';
-    levelSelectButton.style.cursor = 'pointer';
-    levelSelectButton.style.width = '48px';
-    levelSelectButton.style.height = '48px';
-    
-    levelSelectButton.addEventListener('click', () => {
-        showLevelSelectDialog(gameInstance);
-    });
-    
-    // Add restart level button using image asset
-    const restartButton = document.createElement('button');
-    restartButton.id = 'restart-button';
-    restartButton.title = gameInstance.resources.i18n.get('buttons.restart');
-    
-    const restartImage = new Image();
-    restartImage.src = gameInstance.resources.images.ACTION_RESTART.image.src;
-    restartImage.alt = 'Restart';
-    restartImage.style.width = '100%';
-    restartImage.style.height = '100%';
-    restartImage.style.objectFit = 'contain';
-    restartButton.appendChild(restartImage);
-    
-    restartButton.style.padding = '6px';
-    restartButton.style.backgroundColor = 'transparent';
-    restartButton.style.border = 'none';
-    restartButton.style.borderRadius = '50%';
-    restartButton.style.cursor = 'pointer';
-    restartButton.style.width = '48px';
-    restartButton.style.height = '48px';
-    
-    restartButton.addEventListener('click', () => {
-        handleRKey(gameInstance);
-    });
-    
-    // Add music toggle button using image asset
-    const musicButton = document.createElement('button');
-    musicButton.id = 'music-button';
-    musicButton.title = gameInstance.resources.i18n.get('buttons.toggleMusic');
-    
-    const muteImage = new Image();
-    muteImage.src = gameInstance.resources.images.ACTION_MUTE.image.src;
-    muteImage.alt = 'Toggle Music';
-    muteImage.style.width = '100%';
-    muteImage.style.height = '100%';
-    muteImage.style.objectFit = 'contain';
-    musicButton.appendChild(muteImage);
-    
-    musicButton.style.padding = '6px';
-    musicButton.style.backgroundColor = 'transparent';
-    musicButton.style.border = 'none';
-    musicButton.style.borderRadius = '50%';
-    musicButton.style.cursor = 'pointer';
-    musicButton.style.width = '48px';
-    musicButton.style.height = '48px';
-    
-    // Initialize button state based on current music state
-    if (gameInstance.resources.sound.music.paused) {
-        musicButton.style.opacity = '0.5';
+    // Check if the SETTINGS image is loaded
+    if (gameInstance.resources.images.ACTION_SETTINGS && gameInstance.resources.images.ACTION_SETTINGS.image) {
+        const settingsImage = new Image();
+        settingsImage.src = gameInstance.resources.images.ACTION_SETTINGS.image.src;
+        settingsImage.alt = 'Settings';
+        settingsImage.style.width = '100%';
+        settingsImage.style.height = '100%';
+        settingsImage.style.objectFit = 'contain';
+        settingsButton.appendChild(settingsImage);
+    } else {
+        settingsButton.textContent = '⚙️';
+        console.warn('ACTION_SETTINGS image not loaded');
     }
     
-    musicButton.addEventListener('click', () => {
-        const isMusicOn = gameInstance.resources.toggleMusic();
-        // Change opacity based on music state
-        musicButton.style.opacity = isMusicOn ? '1' : '0.5';
+    settingsButton.style.padding = '6px';
+    settingsButton.style.backgroundColor = 'transparent';
+    settingsButton.style.border = 'none';
+    settingsButton.style.borderRadius = '50%';
+    settingsButton.style.cursor = 'pointer';
+    settingsButton.style.width = '48px';
+    settingsButton.style.height = '48px';
+    
+    settingsButton.addEventListener('click', () => {
+        if (gameInstance.state === GAME_STATES.PLAY) {
+            // Pause game timer while in settings
+            gameInstance.score.pauseTimer();
+            showSettingsDialog(gameInstance);
+        }
     });
     
     // Add pause button using image asset
@@ -328,13 +300,19 @@ function setupTouchControls(gameInstance) {
     pauseButton.id = 'pause-button';
     pauseButton.title = gameInstance.resources.i18n.get('buttons.pauseGame');
     
-    const pauseImage = new Image();
-    pauseImage.src = gameInstance.resources.images.ACTION_PAUSE.image.src;
-    pauseImage.alt = 'Pause';
-    pauseImage.style.width = '100%';
-    pauseImage.style.height = '100%';
-    pauseImage.style.objectFit = 'contain';
-    pauseButton.appendChild(pauseImage);
+    // Check if the PAUSE image is loaded
+    if (gameInstance.resources.images.ACTION_PAUSE && gameInstance.resources.images.ACTION_PAUSE.image) {
+        const pauseImage = new Image();
+        pauseImage.src = gameInstance.resources.images.ACTION_PAUSE.image.src;
+        pauseImage.alt = 'Pause';
+        pauseImage.style.width = '100%';
+        pauseImage.style.height = '100%';
+        pauseImage.style.objectFit = 'contain';
+        pauseButton.appendChild(pauseImage);
+    } else {
+        pauseButton.textContent = '⏸️';
+        console.warn('ACTION_PAUSE image not loaded');
+    }
     
     pauseButton.style.padding = '6px';
     pauseButton.style.backgroundColor = 'transparent';
@@ -349,14 +327,18 @@ function setupTouchControls(gameInstance) {
     });
     
     // Add buttons to container
-    controlsContainer.appendChild(backToMenuButton);
-    controlsContainer.appendChild(levelSelectButton);
-    controlsContainer.appendChild(restartButton);
-    controlsContainer.appendChild(musicButton);
+    controlsContainer.appendChild(undoButton);
     controlsContainer.appendChild(pauseButton);
+    controlsContainer.appendChild(settingsButton);
     
     // Add to the document
-    document.getElementById('mainContent').appendChild(controlsContainer);
+    const mainContent = document.getElementById('mainContent');
+    if (mainContent) {
+        mainContent.appendChild(controlsContainer);
+    } else {
+        console.warn('Could not find mainContent element');
+        document.body.appendChild(controlsContainer);
+    }
     
     // Set up state change observer to show/hide buttons
     const originalSetState = gameInstance.setState;
@@ -419,6 +401,23 @@ function handleCanvasClick(event, gameInstance) {
         // Handle clicks on win screen (advance to next level)
         handleSpaceKey(gameInstance);
     } else if (gameInstance.state === GAME_STATES.PAUSED) {
+        // Check for clicks on the continue button in pause menu
+        if (gameInstance.resources.images.btnPlay && gameInstance.resources.images.btnPlay.image) {
+            const btnPlayImg = gameInstance.resources.images.btnPlay.image;
+            const textX = gameInstance.canvas.width / 2;
+            const textY = gameInstance.canvas.height / 2 - 50;
+            const btnX = textX - btnPlayImg.width / 2;
+            const btnY = textY + 40;
+            const btnWidth = btnPlayImg.width;
+            const btnHeight = btnPlayImg.height;
+            
+            if (mouseX >= btnX && mouseX <= btnX + btnWidth && 
+                mouseY >= btnY && mouseY <= btnY + btnHeight) {
+                gameInstance.setState(GAME_STATES.PLAY);
+                return;
+            }
+        }
+    
         // Check for clicks on speed setting buttons
         if (gameInstance.speedButtons) {
             for (const button of gameInstance.speedButtons) {
@@ -560,6 +559,8 @@ function showLevelSelectDialog(gameInstance) {
     closeButton.style.display = 'flex';
     closeButton.style.justifyContent = 'center';
     closeButton.style.alignItems = 'center';
+    closeButton.style.padding = '0';
+    closeButton.style.lineHeight = '0';  // Fix vertical alignment
     closeButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.5)';
     closeButton.style.zIndex = '2';
     closeButton.title = gameInstance.resources.i18n.get('buttons.close');
@@ -795,4 +796,423 @@ function hideDebugPanel() {
     if (debugPanel) {
         debugPanel.style.display = 'none';
     }
+}
+
+function showSettingsDialog(gameInstance) {
+    // Create modal container
+    const modal = document.createElement('div');
+    modal.id = 'settings-modal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    modal.style.zIndex = '1000';
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+
+    // Pause game timer
+    gameInstance.score.pauseTimer();
+
+    // Create dialog content with wood background
+    const dialog = document.createElement('div');
+    // Use the specific wood background image
+    dialog.style.backgroundImage = 'url(assets/images/background_levels_wood.png)';
+    dialog.style.backgroundSize = 'cover';
+    dialog.style.backgroundPosition = 'center';
+    dialog.style.border = '8px solid #3a2214';
+    dialog.style.borderRadius = '15px';
+    dialog.style.padding = '20px';
+    dialog.style.width = '80%';
+    dialog.style.maxWidth = '400px';
+    dialog.style.boxShadow = '0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5)';
+    dialog.style.position = 'relative';
+    
+    // Add texture overlay for more wood-like feel
+    const textureOverlay = document.createElement('div');
+    textureOverlay.style.position = 'absolute';
+    textureOverlay.style.top = '0';
+    textureOverlay.style.left = '0';
+    textureOverlay.style.width = '100%';
+    textureOverlay.style.height = '100%';
+    textureOverlay.style.backgroundImage = 'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMVEWFhYWDg4N3d3dtbW17e3t1dXWBgYGHh4d5eXlzc3OLi4ubm5uVlZWPj4+NjY19fX2JiYl/f39ra2uRkZGZmZlpaWmXl5dvb29xcXGTk5NnZ2c8TV1mAAAAG3RSTlNAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAvEOwtAAAFVklEQVR4XpWWB67c2BUFb3g557T/hRo9/WUMZHlgr4Bg8Z4qQgQJlHI4A8SzFVrapvmTF9O7dmYRFZ60YiBhJRCgh1FYhiLAmdvX0CzTOpNE77ME0Zty/nWWzchDtiqrmQDeuv3powQ5ta2eN0FY0InkqDD73lT9c9lEzwUNqgFHs9VQce3TVClFCQrSTfOiYkVJQBmpbq2L6iZavPnAPcoU0dSw0SUTqz/GtrGuXfbyyBniKykOWQWGqwwMA7QiYAxi+IlPdqo+hYHnUt5ZPfnsHJyNiDtnpJyayNBkF6cWoYGAMY92U2hXHF/C1M8uP/ZtYdiuj26UdAdQQSXQErwSOMzt/XWRWAz5GuSBIkwG1H3FabJ2OsUOUhGC6tK4EMtJO0ttC6IBD3kM0ve0tJwMdSfjZo+EEISaeTr9P3wYrGjXqyC1krcKdhMpxEnt5JetoulscpyzhXN5FRpuPHvbeQaKxFAEB6EN+cYN6xD7RYGpXpNndMmZgM5Dcs3YSNFDHUo2LGfZuukSWyUYirJAdYbF3MfqEKmjM+I2EfhA94iG3L7uKrR+GdWD73ydlIB+6hgref1QTlmgmbM3/LeX5GI1Ux1RWpgxpLuZ2+I+IjzZ8wqE4nilvQdkUdfhzI5QDWy+kw5Wgg2pGpeEVeCCA7b85BO3F9DzxB3cdqvBzWcmzbyMiqhzuYqtHRVG2y4x+KOlnyqla8AoWWpuBoYRxzXrfKuILl6SfiWCbjxoZJUaCBj1CjH7GIaDbc9kqBY3W/Rgjda1iqQcOJu2WW+76pZC9QG7M00dffe9hNnseupFL53r8F7YHSwJWUKP2q+k7RdsxyOB11n0xtOvnW4irMMFNV4H0uqwS5ExsmP9AxbDTc9JwgneAT5vTiUSm1E7BSflSt3bfa1tv8Di3R8n3Af7MNWzs49hmauE2wP+ttrq+AsWpFG2awvsuOqbipWHgtuvuaAE+A1Z/7gC9hesnr+7wqCwG8c5yAg3AL1fm8T9AZtp/bbJGwl1pNrE7RuOX7PeMRUERVaPpEs+yqeoSmuOlokqw49pgomjLeh7icHNlG19yjs6XXOMedYm5xH2YxpV2tc0Ro2jJfxC50ApuxGob7lMsxfTbeUv07TyYxpeLucEH1gNd4IKH2LAg5TdVhlCafZvpskfncCfx8pOhJzd76bJWeYFnFciwcYfubRc12Ip/ppIhA1/mSZ/RxjFDrJC5xifFjJpY2Xl5zXdguFqYyTR1zSp1Y9p+tktDYYSNflcxI0iyO4TPBdlRcpeqjK/piF5bklq77VSEaA+z8qmJTFzIWiitbnzR794USKBUaT0NTEsVjZqLaFVqJoPN9ODG70IPbfBHKK+/q/AWR0tJzYHRULOa4MP+W/HfGadZUbfw177G7j/OGbIs8TahLyynl4X4RinF793Oz+BU0saXtUHrVBFT/DnA3ctNPoGbs4hRIjTok8i+algT1lTHi4SxFvONKNrgQFAq2/gFnWMXgwffgYMJpiKYkmW3tTg3ZQ9Jq+f8XN+A5eeUKHWvJWJ2sgJ1Sop+wwhqFVijqWaJhwtD8MNlSBeWNNWTa5Z5kPZw5+LbVT99wqTdx29lMUH4OIG/D86ruKEauBjvH5xy6um/Sfj7ei6UUVk4AIl3MyD4MSSTOFgSwsH/QJWaQ5as7ZcmgBZkzjjU1UrQ74ci1gWBCSGHtuV1H2mhSnO3Wp/3fEV5a+4wz//6qy8JxjZsmxxy5+4w9CDNJY09T072iKG0EnOS0arEYgXqYnXcYHwjTtUNAcMelOd4xpkoqiTYICWFq0JSiPfPDQdnt+4/wuqcXY47QILbgAAAABJRU5ErkJggg==)';
+    textureOverlay.style.opacity = '0.05';
+    textureOverlay.style.pointerEvents = 'none';
+    dialog.appendChild(textureOverlay);
+
+    // Add title
+    const title = document.createElement('h2');
+    title.textContent = gameInstance.resources.i18n.get('menu.settings') || 'Settings';
+    title.style.color = '#faf0dc';
+    title.style.textAlign = 'center';
+    title.style.margin = '0 0 15px 0';
+    title.style.fontFamily = 'Arial, sans-serif';
+    title.style.fontSize = '24px';
+    title.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.7)';
+    title.style.position = 'relative';
+    title.style.zIndex = '2';
+    dialog.appendChild(title);
+
+    // Add close button
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '&times;';  // × symbol
+    closeButton.style.position = 'absolute';
+    closeButton.style.top = '10px';
+    closeButton.style.right = '10px';
+    closeButton.style.background = 'rgba(150, 80, 30, 0.7)';
+    closeButton.style.border = '2px solid #fbefd5';
+    closeButton.style.borderRadius = '50%';
+    closeButton.style.color = '#faf0dc';
+    closeButton.style.fontSize = '20px';
+    closeButton.style.cursor = 'pointer';
+    closeButton.style.width = '30px';
+    closeButton.style.height = '30px';
+    closeButton.style.display = 'flex';
+    closeButton.style.justifyContent = 'center';
+    closeButton.style.alignItems = 'center';
+    closeButton.style.padding = '0';
+    closeButton.style.lineHeight = '0';  // Fix vertical alignment
+    closeButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.5)';
+    closeButton.style.zIndex = '2';
+    closeButton.title = gameInstance.resources.i18n.get('buttons.close');
+    closeButton.onclick = () => {
+        document.body.removeChild(modal);
+        gameInstance.score.resumeTimer();
+    };
+    
+    // Hover effect for close button
+    closeButton.onmouseover = () => {
+        closeButton.style.background = 'rgba(180, 100, 40, 0.9)';
+        closeButton.style.transform = 'scale(1.05)';
+    };
+    closeButton.onmouseout = () => {
+        closeButton.style.background = 'rgba(150, 80, 30, 0.7)';
+        closeButton.style.transform = 'scale(1)';
+    };
+    dialog.appendChild(closeButton);
+    
+    // Create settings container
+    const settingsContainer = document.createElement('div');
+    settingsContainer.style.position = 'relative';
+    settingsContainer.style.zIndex = '2';
+    settingsContainer.style.display = 'flex';
+    settingsContainer.style.flexDirection = 'column';
+    settingsContainer.style.gap = '15px';
+    settingsContainer.style.marginTop = '20px';
+    
+    // Function to create a button group
+    function createButtonGroup(label, buttons) {
+        const group = document.createElement('div');
+        group.style.display = 'flex';
+        group.style.alignItems = 'center';
+        group.style.gap = '10px';
+        
+        const labelElem = document.createElement('div');
+        labelElem.textContent = label;
+        labelElem.style.color = '#faf0dc';
+        labelElem.style.fontFamily = 'Arial, sans-serif';
+        labelElem.style.fontSize = '16px';
+        labelElem.style.textShadow = '1px 1px 2px rgba(0,0,0,0.7)';
+        labelElem.style.flexBasis = '40%';
+        group.appendChild(labelElem);
+        
+        const btnContainer = document.createElement('div');
+        btnContainer.style.display = 'flex';
+        btnContainer.style.gap = '10px';
+        btnContainer.style.flexBasis = '60%';
+        btnContainer.style.justifyContent = 'flex-end';
+        
+        buttons.forEach(button => {
+            btnContainer.appendChild(button);
+        });
+        
+        group.appendChild(btnContainer);
+        return group;
+    }
+    
+    // Function to create a wooden button
+    function createWoodenButton(icon, label, onClick, size = 'medium') {
+        const button = document.createElement('button');
+        button.title = label;
+        
+        // Set button dimensions based on size
+        let width, height, fontSize;
+        switch(size) {
+            case 'small':
+                width = '45px';  // Increased from 32px to 45px
+                height = '45px'; // Increased from 32px to 45px
+                fontSize = '15px';
+                break;
+            case 'large':
+                width = '80px';  // Increased from 64px to 80px
+                height = '80px'; // Increased from 64px to 80px
+                fontSize = '20px';
+                break;
+            case 'medium':
+            default:
+                width = '60px';  // Increased from 48px to 60px
+                height = '60px'; // Increased from 48px to 60px
+                fontSize = '18px';
+                break;
+        }
+        
+        button.style.width = width;
+        button.style.height = height;
+        button.style.backgroundColor = '#654321';
+        button.style.backgroundImage = 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.1) 100%)';
+        button.style.border = '2px solid #8B4513';
+        button.style.borderRadius = '8px';
+        button.style.cursor = 'pointer';
+        button.style.display = 'flex';
+        button.style.justifyContent = 'center';
+        button.style.alignItems = 'center';
+        button.style.padding = '0';
+        button.style.color = '#faf0dc';
+        button.style.fontSize = fontSize;
+        button.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+        button.style.transition = 'all 0.15s ease-in-out';
+        
+        // If icon is an image, use it
+        if (icon && typeof icon === 'object' && icon.tagName === 'IMG') {
+            icon.style.width = '80%'; // Increased from 70% to 80%
+            icon.style.height = '80%'; // Increased from 70% to 80%
+            icon.style.objectFit = 'contain';
+            button.appendChild(icon);
+        } else {
+            // Otherwise use text/emoji
+            button.textContent = icon || label;
+        }
+        
+        // Hover effects
+        button.onmouseover = () => {
+            button.style.transform = 'translateY(-2px)';
+            button.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
+            button.style.backgroundColor = '#755431';
+        };
+        
+        button.onmouseout = () => {
+            button.style.transform = 'translateY(0)';
+            button.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+            button.style.backgroundColor = '#654321';
+        };
+        
+        // Active state
+        button.onmousedown = () => {
+            button.style.transform = 'translateY(1px)';
+            button.style.boxShadow = '0 1px 2px rgba(0,0,0,0.5)';
+        };
+        
+        button.onmouseup = () => {
+            button.style.transform = 'translateY(-2px)';
+            button.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
+        };
+        
+        // Click handler
+        button.onclick = onClick;
+        
+        return button;
+    }
+    
+    // 1. Back to home (main menu) button
+    const homeButton = createWoodenButton(
+        gameInstance.resources.images.ACTION_HOME && gameInstance.resources.images.ACTION_HOME.image ? 
+        (() => {
+            const img = new Image();
+            img.src = gameInstance.resources.images.ACTION_HOME.image.src;
+            return img;
+        })() : '🏠',
+        gameInstance.resources.i18n.get('buttons.home') || 'Home',
+        () => {
+            const confirmed = window.confirm(gameInstance.resources.i18n.get('game.confirmExit') || "Return to main menu?");
+            if (confirmed) {
+                document.body.removeChild(modal);
+                gameInstance.setState(GAME_STATES.INTRO);
+            }
+        }
+    );
+    
+    // 2. Level select button
+    const levelSelectButton = createWoodenButton(
+        gameInstance.resources.images.ACTION_LEVEL && gameInstance.resources.images.ACTION_LEVEL.image ? 
+        (() => {
+            const img = new Image();
+            img.src = gameInstance.resources.images.ACTION_LEVEL.image.src;
+            return img;
+        })() : '📋',
+        gameInstance.resources.i18n.get('buttons.levelSelect') || 'Level Select',
+        () => {
+            document.body.removeChild(modal);
+            showLevelSelectDialog(gameInstance);
+        }
+    );
+    
+    // 3. Restart button
+    const restartButton = createWoodenButton(
+        gameInstance.resources.images.ACTION_RESTART && gameInstance.resources.images.ACTION_RESTART.image ? 
+        (() => {
+            const img = new Image();
+            img.src = gameInstance.resources.images.ACTION_RESTART.image.src;
+            return img;
+        })() : '🔄',
+        gameInstance.resources.i18n.get('buttons.restart') || 'Restart',
+        () => {
+            const confirmed = window.confirm(gameInstance.resources.i18n.get('game.confirmRestart') || "Restart level?");
+            if (confirmed) {
+                document.body.removeChild(modal);
+                gameInstance.restartLevel();
+            }
+        }
+    );
+    
+    // 4. Group navigation buttons
+    const navigationGroup = createButtonGroup(
+        gameInstance.resources.i18n.get('settings.navigation') || 'Navigate',
+        [homeButton, levelSelectButton, restartButton]
+    );
+    settingsContainer.appendChild(navigationGroup);
+    
+    // 5. Player speed buttons
+    const slowButton = createWoodenButton(
+        '1x', 
+        gameInstance.resources.i18n.get('settings.slowSpeed') || 'Slow',
+        () => {
+            gameInstance.setMovementSpeed('SLOW');
+            saveSpeedSetting('SLOW');
+            updateSpeedButtonsState();
+        },
+        'small'
+    );
+    
+    const normalButton = createWoodenButton(
+        '2x', 
+        gameInstance.resources.i18n.get('settings.normalSpeed') || 'Normal',
+        () => {
+            gameInstance.setMovementSpeed('NORMAL');
+            saveSpeedSetting('NORMAL');
+            updateSpeedButtonsState();
+        },
+        'small'
+    );
+    
+    const fastButton = createWoodenButton(
+        '3x', 
+        gameInstance.resources.i18n.get('settings.fastSpeed') || 'Fast',
+        () => {
+            gameInstance.setMovementSpeed('FAST');
+            saveSpeedSetting('FAST');
+            updateSpeedButtonsState();
+        },
+        'small'
+    );
+    
+    const veryFastButton = createWoodenButton(
+        '4x', 
+        gameInstance.resources.i18n.get('settings.veryFastSpeed') || 'Very Fast',
+        () => {
+            gameInstance.setMovementSpeed('VERY_FAST');
+            saveSpeedSetting('VERY_FAST');
+            updateSpeedButtonsState();
+        },
+        'small'
+    );
+    
+    // Helper function to save speed setting
+    function saveSpeedSetting(speed) {
+        gameInstance.currentSpeedSetting = speed;
+    }
+    
+    // Update button states based on current speed
+    function updateSpeedButtonsState() {
+        const currentSpeed = gameInstance.currentSpeedSetting || gameInstance.settings.movementSpeed;
+        [slowButton, normalButton, fastButton, veryFastButton].forEach(btn => {
+            btn.style.border = '2px solid #8B4513';
+            btn.style.opacity = '0.7';
+        });
+        
+        let activeButton;
+        switch(currentSpeed) {
+            case 'SLOW': activeButton = slowButton; break;
+            case 'NORMAL': activeButton = normalButton; break;
+            case 'FAST': activeButton = fastButton; break;
+            case 'VERY_FAST': activeButton = veryFastButton; break;
+        }
+        
+        if (activeButton) {
+            activeButton.style.border = '2px solid #ffd700';
+            activeButton.style.opacity = '1';
+        }
+    }
+    
+    // Group speed buttons
+    const speedGroup = createButtonGroup(
+        gameInstance.resources.i18n.get('settings.playerSpeed') || 'Player Speed',
+        [slowButton, normalButton, fastButton, veryFastButton]
+    );
+    settingsContainer.appendChild(speedGroup);
+    
+    // Initialize speed button states
+    updateSpeedButtonsState();
+    
+    // 6. Music toggle button
+    const musicOnButton = createWoodenButton(
+        '🔊', 
+        gameInstance.resources.i18n.get('settings.musicOn') || 'Music On',
+        () => {
+            if (gameInstance.resources.sound.music.paused) {
+                gameInstance.resources.playBackgroundMusic();
+                updateMusicButtonsState();
+                gameInstance.saveSettings(); // Save music preference
+            }
+        },
+        'small'
+    );
+    
+    const musicOffButton = createWoodenButton(
+        '🔇', 
+        gameInstance.resources.i18n.get('settings.musicOff') || 'Music Off',
+        () => {
+            if (!gameInstance.resources.sound.music.paused) {
+                gameInstance.resources.sound.music.pause();
+                updateMusicButtonsState();
+                gameInstance.saveSettings(); // Save music preference
+            }
+        },
+        'small'
+    );
+    
+    // Update music button states
+    function updateMusicButtonsState() {
+        const isMusicOn = !gameInstance.resources.sound.music.paused;
+        musicOnButton.style.border = isMusicOn ? '2px solid #ffd700' : '2px solid #8B4513';
+        musicOnButton.style.opacity = isMusicOn ? '1' : '0.7';
+        
+        musicOffButton.style.border = !isMusicOn ? '2px solid #ffd700' : '2px solid #8B4513';
+        musicOffButton.style.opacity = !isMusicOn ? '1' : '0.7';
+    }
+    
+    // Group music buttons
+    const musicGroup = createButtonGroup(
+        gameInstance.resources.i18n.get('settings.music') || 'Music',
+        [musicOnButton, musicOffButton]
+    );
+    settingsContainer.appendChild(musicGroup);
+    
+    // Initialize music button states
+    updateMusicButtonsState();
+    
+    dialog.appendChild(settingsContainer);
+    modal.appendChild(dialog);
+    document.body.appendChild(modal);
+    
+    // Add keyboard event to close on Escape
+    const handleEscKey = (event) => {
+        if (event.key === 'Escape') {
+            document.body.removeChild(modal);
+            gameInstance.score.resumeTimer();
+            document.removeEventListener('keydown', handleEscKey);
+        }
+    };
+    document.addEventListener('keydown', handleEscKey);
 }

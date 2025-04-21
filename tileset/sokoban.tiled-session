@@ -1,0 +1,43 @@
+{
+    "fileStates": {
+        ":/automap-tiles.tsx": {
+            "scaleInDock": 1
+        },
+        "D:/Sites/canvas/games/sokoban/src/js/levels/Sokoban.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "D:/Sites/canvas/games/sokoban/src/js/levels/level01.json": {
+            "scale": 2,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 445.5,
+                "y": -2065.75
+            }
+        },
+        "D:/Sites/canvas/games/sokoban/src/js/levels/level02.json": {
+            "scale": 7.778124999999999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 112.10928083567703,
+                "y": 96.1028525512254
+            }
+        },
+        "D:/Sites/canvas/games/sokoban/src/js/levels/level02.json#Sokoban": {
+            "scaleInDock": 1
+        },
+        "Sokoban.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "openFiles": [
+        "Sokoban.tsx"
+    ],
+    "recentFiles": [
+        "Sokoban.tsx",
+        "D:/Sites/canvas/games/sokoban/src/js/levels/level02.json",
+        "D:/Sites/canvas/games/sokoban/src/js/levels/level01.json"
+    ]
+}

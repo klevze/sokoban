@@ -9,7 +9,8 @@ export default {
     selectLevel: "选择关卡",
     settings: "设置",
     help: "帮助",
-    about: "关于"
+    about: "关于",
+    play: "开始游戏"
   },
   game: {
     level: "关卡",
@@ -23,7 +24,7 @@ export default {
     victory: "恭喜！",
     allLevelsComplete: "恭喜！你已完成所有关卡！",
     confirmExit: "返回主菜单？",
-    confirmRestart: "确定要重新开始此关卡吗？",
+    confirmRestart: "确定要重新开始本关卡？",
     loading: "加载中..."
   },
   settings: {
@@ -32,17 +33,25 @@ export default {
     music: "音乐",
     controls: "控制",
     back: "返回",
-    on: "开启",
-    off: "关闭",
+    on: "开",
+    off: "关",
     paused: "已暂停",
     resumeHint: "按ESC或P继续",
-    movementSpeed: "移动速度"
+    movementSpeed: "移动速度",
+    playerSpeed: "玩家速度",
+    slowSpeed: "慢",
+    normalSpeed: "正常",
+    fastSpeed: "快",
+    veryFastSpeed: "非常快",
+    musicOn: "音乐开",
+    musicOff: "音乐关",
+    navigation: "导航"
   },
   speeds: {
-    slow: "慢速",
+    slow: "慢",
     normal: "正常",
-    fast: "快速",
-    veryFast: "极快"
+    fast: "快",
+    veryFast: "非常快"
   },
   loading: {
     title: "加载中",
@@ -59,6 +68,8 @@ export default {
     restart: "重新开始",
     toggleMusic: "切换音乐",
     pause: "暂停游戏",
-    close: "关闭"
+    close: "关闭",
+    settings: "设置",
+    undo: "撤销"
   }
 };

@@ -9,6 +9,7 @@
 // Import dependencies
 import { game } from './game.js';
 import { PLAYER, GAME_STATES, PHYSICS } from './config/config.js';
+import { ParticleSystem } from './particles.js';
 
 /**
  * Player class represents the playable character in the game
@@ -60,11 +61,25 @@ export class Player {
         this.idleFx = false;
         this.idleThreshold = PLAYER.IDLE_TIMEOUT; // Wait time before idle animation triggers
         this.lastWhistleTime = 0; // Track when the whistle sound was last played
+        this.hasInteracted = false; // Track if player has made any moves yet
+        this.whistlePlayedSinceLastMove = false; // Track if whistle has played since last movement
         
         // Movement state
         this.isMoving = false;
         this.moveInterval = null;
         this.moveSpeed = 20; // Speed of movement animation in ms (lower = faster)
+        
+        // Teleportation effect state
+        this.particles = new ParticleSystem();
+        this.isTeleporting = false;
+        this.teleportProgress = 0;
+        this.teleportDuration = 1500; // 1.5 seconds for full teleport effect
+        this.teleportStartTime = 0;
+        this.opacity = 0; // Start invisible when teleporting in
+        
+        // Undo functionality - track move history
+        this.moveHistory = [];
+        this.maxHistoryLength = 100; // Limit history to prevent memory issues
         
         // Initialize player animations
         this.initAnimations();
@@ -102,12 +117,18 @@ export class Player {
                 speed: 200,
                 currentFrame: 0,
                 lastFrameTime: 0
+            },
+            teleport: {
+                frames: [0, 1, 2, 3], // Use all frames for teleport animation
+                speed: 100, // Faster animation for teleport
+                currentFrame: 0,
+                lastFrameTime: 0
             }
         };
     }
 
     /**
-     * Find the player's starting position in the level data
+     * Find the player's starting position in level data and initiate teleport effect
      * Searches for tile ID 88 which represents the player's spawn point
      * 
      * This is called during initialization and when loading a new level
@@ -125,14 +146,98 @@ export class Player {
                     // Initialize pixel position to match grid position
                     this.pixelPos.x = x;
                     this.pixelPos.y = y;
-                    // Reset moved flag to ensure timer starts on first move of new level
+                    // Reset flags to ensure timer starts on first move of new level
                     this.moved = false;
+                    // Reset the interaction flags for new levels
+                    this.hasInteracted = false;
+                    this.whistlePlayedSinceLastMove = false;
+                    
+                    // Clear move history when starting a new level
+                    this.moveHistory = [];
+                    
+                    // Setup for teleportation effect without accessing level yet
+                    // The actual particles will be created on first draw
+                    this.opacity = 0;
+                    this.isTeleporting = true;
+                    this.teleportStartTime = 0; // Will be initialized in draw
+                    this.teleportProgress = 0;
+                    this.setAnimation('teleport');
+                    
                     return; // Start position found, exit early
                 }
             }
         }
     
         console.error("No player start position found in level data!");
+    }
+
+    /**
+     * Initiates teleportation effect when player appears
+     * Simple fade-in without particles
+     */
+    startTeleportEffect() {
+        // This method is now called from draw() when level is ready
+        
+        // Set teleport state if not already done
+        if (this.teleportStartTime === 0) {
+            this.teleportStartTime = performance.now();
+            
+            // Play teleport sound
+            game.resources.playSound('boxOnGoal', 0.7, 0.3);
+        }
+    }
+
+    /**
+     * Updates the teleportation effect progress
+     * Handles the gradual fade-in of the player
+     * 
+     * @param {number} now - Current timestamp from performance.now()
+     * @returns {boolean} - True if teleport is complete
+     */
+    updateTeleportEffect(now) {
+        if (!this.isTeleporting) {
+            return true; // Teleport is already complete
+        }
+        
+        // Initialize teleport if needed
+        if (this.teleportStartTime === 0) {
+            this.startTeleportEffect();
+            return false;
+        }
+        
+        // Calculate elapsed time
+        const elapsed = now - this.teleportStartTime;
+        
+        // Calculate progress (0 to 1)
+        this.teleportProgress = Math.min(elapsed / this.teleportDuration, 1);
+        
+        // Update opacity with a smoother easing function for fade-in
+        this.opacity = this._easeInOutCubic(this.teleportProgress);
+        
+        // Update animation frame for teleport
+        const anim = this.animations[this.currentAnimation];
+        const frameCount = anim.frames.length;
+        anim.currentFrame = Math.floor(this.teleportProgress * frameCount * 2) % frameCount;
+        
+        // Check if teleport is complete
+        if (this.teleportProgress >= 1) {
+            this.isTeleporting = false;
+            this.opacity = 1; // Fully visible
+            this.setAnimation('idle');
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Cubic easing function for smoother fade-in/out effects
+     * @param {number} t - Progress value between 0 and 1
+     * @returns {number} - Eased value
+     * @private
+     */
+    _easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
     /**
@@ -389,7 +494,8 @@ export class Player {
      */
     move(x, y) {
         // Don't process moves if player is already moving or game isn't in play state
-        if (this.isMoving || game.state !== GAME_STATES.PLAY) {
+        // or if player is still teleporting in
+        if (this.isMoving || game.state !== GAME_STATES.PLAY || this.isTeleporting) {
             return false;
         }
 
@@ -397,6 +503,13 @@ export class Player {
 
         const newX = this.coord.x + x;
         const newY = this.coord.y + y;
+        
+        // Create data for move history to use for undo
+        const moveData = {
+            playerPos: { x: this.coord.x, y: this.coord.y },
+            playerDir: { x, y },
+            pushedBox: null
+        };
 
         // Check if movement is possible
         if (!this.checkCoord(newX, newY)) {
@@ -422,6 +535,12 @@ export class Player {
                 levelData.layers[2].data[tileIndex1] = 0;
                 levelData.layers[2].data[tileIndex2] = 94;
                 
+                // Store box data for undo
+                moveData.pushedBox = {
+                    fromPos: { x: newX, y: newY },
+                    toPos: { x: boxTargetX, y: boxTargetY }
+                };
+                
                 // Try to move the box
                 if (!game.boxes.move(newX, newY, boxTargetX, boxTargetY)) {
                     // Failed to move box - reset animation
@@ -441,8 +560,78 @@ export class Player {
             game.score.startTimer();
         }
         
+        // Mark player as having interacted
+        this.hasInteracted = true;
+        
+        // Reset the whistle flag - player is moving, so we should allow whistle to play
+        // again after the idle timeout
+        this.whistlePlayedSinceLastMove = false;
+        
+        // Add this move to history for undo functionality
+        this.moveHistory.push(moveData);
+        
+        // Limit history size to prevent memory issues
+        if (this.moveHistory.length > this.maxHistoryLength) {
+            this.moveHistory.shift();
+        }
+
         // Move the player
         return this.movePlayer(this, x, y);
+    }
+    
+    /**
+     * Undo the last move if any moves have been made
+     * Restores player and box positions to their previous state
+     * 
+     * @returns {boolean} - True if undo was successful
+     */
+    undo() {
+        // Don't allow undo if player is moving or game isn't in play state
+        if (this.isMoving || game.state !== GAME_STATES.PLAY || this.isTeleporting) {
+            return false;
+        }
+        
+        // Check if there are moves to undo
+        if (this.moveHistory.length === 0) {
+            // No moves to undo - don't play any sound as we're at starting position
+            return false;
+        }
+        
+        // Get the last move from history
+        const lastMove = this.moveHistory.pop();
+        
+        // If a box was pushed, move it back
+        if (lastMove.pushedBox) {
+            const { fromPos, toPos } = lastMove.pushedBox;
+            
+            // Update box in level data
+            const levelData = game.levelData;
+            const toIndex = toPos.y * levelData.width + toPos.x;
+            const fromIndex = fromPos.y * levelData.width + fromPos.x;
+            levelData.layers[2].data[toIndex] = 0; // Remove box from target position
+            levelData.layers[2].data[fromIndex] = 94; // Put box back at original position
+            
+            // Move the box back in the boxes manager
+            game.boxes.undoMove(toPos.x, toPos.y, fromPos.x, fromPos.y);
+        }
+        
+        // Update player position
+        this.coord.x = lastMove.playerPos.x;
+        this.coord.y = lastMove.playerPos.y;
+        
+        // Update pixel position to match grid position
+        this.pixelPos.x = this.coord.x;
+        this.pixelPos.y = this.coord.y;
+        
+        // Decrement move counter
+        if (game.score.moves > 0) {
+            game.score.moves--;
+        }
+        
+        // Play undo sound
+        game.resources.playSound('boxOnGoal', 0.4, 0.1);
+        
+        return true;
     }
 
     /**
@@ -457,13 +646,17 @@ export class Player {
         // 2. Game is in play state
         // 3. Player has been inactive for threshold time
         // 4. Player is not currently moving
-        // 5. Whistle hasn't been played recently (at least 30 seconds since last whistle)
+        // 5. Whistle hasn't been played since last movement
+        // 6. Player has interacted at least once
+        // 7. Not currently teleporting
         if (
             !this.idleFx && 
             game.state === GAME_STATES.PLAY && 
             now - this.idle > this.idleThreshold &&
             !this.isMoving &&
-            (now - this.lastWhistleTime > this.idleThreshold)
+            !this.whistlePlayedSinceLastMove &&
+            this.hasInteracted &&
+            !this.isTeleporting
         ) {
             // Face player downward for idle animation
             this.movement = PLAYER.DIRECTION.DOWN;
@@ -471,6 +664,9 @@ export class Player {
             // Play idle sound and update last whistle time
             game.resources.playSound('whistle', 0.8, 0.1);
             this.lastWhistleTime = now;
+            
+            // Mark that whistle has played since last movement
+            this.whistlePlayedSinceLastMove = true;
             
             // Start special idle animation
             this.setAnimation('special');
@@ -495,11 +691,17 @@ export class Player {
      * - Frame-based animation
      * - Shadow effect for depth
      * - Smooth position interpolation during movement
+     * - Simple fade-in teleportation effect
      */
     draw() {
-        // Update animation frame based on current time
-        if (!this.isMoving) {
-            this.updateAnimation(performance.now());
+        // Update teleport effect if active
+        const now = performance.now();
+        if (this.isTeleporting) {
+            this.updateTeleportEffect(now);
+        }
+        // Otherwise update normal animation
+        else if (!this.isMoving) {
+            this.updateAnimation(now);
         }
         
         // Get current frame from animation
@@ -528,9 +730,9 @@ export class Player {
         }
         
         // Draw shadow beneath player for better visual effect
-        if (this.drawShadow) {
+        if (this.drawShadow && this.opacity > 0.2) {
             this.ctx.save();
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            this.ctx.fillStyle = `rgba(0, 0, 0, ${0.3 * this.opacity})`;
             this.ctx.beginPath();
             this.ctx.ellipse(
                 game.level.startX + this.pixelPos.x * outputWidth + outputWidth / 2,
@@ -546,6 +748,13 @@ export class Player {
         }
         
         // Draw the player sprite using pixelPos for smooth movement
+        this.ctx.save();
+        
+        // Apply opacity for teleport materialization effect
+        if (this.opacity < 1) {
+            this.ctx.globalAlpha = this.opacity;
+        }
+        
         this.ctx.drawImage(
             this.sprite,                                // Tilemap image file
             frameIndex * this.tilesWidth,              // source X
@@ -557,5 +766,7 @@ export class Player {
             outputWidth + scaledExtraAddon,        // destination Width
             outputWidth + scaledExtraAddon         // destination Height
         );
+        
+        this.ctx.restore();
     }
 }

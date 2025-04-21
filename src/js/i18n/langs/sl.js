@@ -9,21 +9,22 @@ export default {
     selectLevel: "Izberi stopnjo",
     settings: "Nastavitve",
     help: "Pomoč",
-    about: "O igri"
+    about: "O igri",
+    play: "Igraj"
   },
   game: {
     level: "Stopnja",
     moves: "Premiki",
-    pushes: "Potisni",
+    pushes: "Potiskanja",
     time: "Čas",
     restart: "Ponovno začni stopnjo",
-    undo: "Razveljavi premik",
-    completed: "Stopnja končana!",
-    nextLevel: "Pritisni preslednico za nadaljevanje",
+    undo: "Razveljavi potezo",
+    completed: "Stopnja dokončana!",
+    nextLevel: "Pritisni presledek za nadaljevanje",
     victory: "Čestitke!",
-    allLevelsComplete: "Čestitke! Zaključili ste vse stopnje!",
-    confirmExit: "Nazaj na glavni meni?",
-    confirmRestart: "Ali ste prepričani, da želite ponovno začeti stopnjo?",
+    allLevelsComplete: "Čestitke! Končali ste vse stopnje!",
+    confirmExit: "Se vrnete v glavni meni?",
+    confirmRestart: "Ali ste prepričani, da želite znova začeti to stopnjo?",
     loading: "Nalaganje..."
   },
   settings: {
@@ -34,19 +35,27 @@ export default {
     back: "Nazaj",
     on: "Vključeno",
     off: "Izključeno",
-    paused: "PREMOR",
+    paused: "PAVZA",
     resumeHint: "Pritisni ESC ali P za nadaljevanje",
-    movementSpeed: "Hitrost premikanja"
+    movementSpeed: "Hitrost premikanja",
+    playerSpeed: "Hitrost igralca",
+    slowSpeed: "Počasi",
+    normalSpeed: "Normalno",
+    fastSpeed: "Hitro",
+    veryFastSpeed: "Zelo hitro",
+    musicOn: "Glasba vključena",
+    musicOff: "Glasba izključena",
+    navigation: "Navigacija"
   },
   speeds: {
-    slow: "Počasno",
+    slow: "Počasi",
     normal: "Normalno",
     fast: "Hitro",
     veryFast: "Zelo hitro"
   },
   loading: {
     title: "Nalaganje",
-    preparing: "Pritisni preslednico za začetek igre",
+    preparing: "Pritisni presledek za nalaganje igre",
     loading: "Nalaganje"
   },
   error: {
@@ -56,9 +65,11 @@ export default {
     play: "Igraj",
     home: "Domov",
     levelSelect: "Izberi stopnjo",
-    restart: "Ponovno zaženi",
+    restart: "Ponovi",
     toggleMusic: "Vklopi/izklopi glasbo",
-    pause: "Premor igre",
-    close: "Zapri"
+    pause: "Pavza",
+    close: "Zapri",
+    settings: "Nastavitve",
+    undo: "Razveljavi"
   }
 };

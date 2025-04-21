@@ -73,6 +73,22 @@ export class Score {
     }
 
     /**
+     * Pauses the game timer
+     * Same as stopTimer, but explicitly named for pausing the game
+     */
+    pauseTimer() {
+        this.stopTimer();
+    }
+
+    /**
+     * Resumes the game timer after being paused
+     * Same as startTimer, but explicitly named for resuming after pause
+     */
+    resumeTimer() {
+        this.startTimer();
+    }
+
+    /**
      * Resets the game timer
      * Clears all timer-related properties
      */

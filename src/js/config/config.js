@@ -117,6 +117,8 @@ export const ASSET_PATHS = relativizeAssetPaths({
     ACTION_MUTE: '/assets/images/top_action_mute.png',
     ACTION_PAUSE: '/assets/images/top_action_pause.png',
     ACTION_RESTART: '/assets/images/top_action_restart.png',
+    ACTION_UNDO: '/assets/images/top_action_undo.png',
+    ACTION_SETTINGS: '/assets/images/top_action_settings.png',
   },
   SOUNDS: {
     MUSIC: '/assets/sound/Dreamcatcher.mp3',

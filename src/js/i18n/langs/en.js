@@ -9,7 +9,8 @@ export default {
     selectLevel: "Select Level",
     settings: "Settings",
     help: "Help",
-    about: "About"
+    about: "About",
+    play: "Play"
   },
   game: {
     level: "Level",
@@ -21,9 +22,9 @@ export default {
     completed: "Level Completed!",
     nextLevel: "Press Space to Continue",
     victory: "Congratulations!",
-    allLevelsComplete: "Congratulations! You've completed all levels!",
+    allLevelsComplete: "Congratulations! You have completed all levels!",
     confirmExit: "Return to main menu?",
-    confirmRestart: "Are you sure you want to restart the level?",
+    confirmRestart: "Are you sure you want to restart this level?",
     loading: "Loading..."
   },
   settings: {
@@ -36,7 +37,16 @@ export default {
     off: "Off",
     paused: "PAUSED",
     resumeHint: "Press ESC or P to resume",
-    movementSpeed: "Movement Speed"
+    movementSpeed: "Movement Speed",
+    playerSpeed: "Player Speed",
+    slowSpeed: "Slow",
+    normalSpeed: "Normal",
+    fastSpeed: "Fast",
+    veryFastSpeed: "Very Fast",
+    musicOn: "Music On",
+    musicOff: "Music Off",
+    navigation: "Navigate",
+    openSettings: "Open Settings"
   },
   speeds: {
     slow: "Slow",
@@ -59,6 +69,8 @@ export default {
     restart: "Restart",
     toggleMusic: "Toggle Music",
     pause: "Pause Game",
-    close: "Close"
+    close: "Close",
+    settings: "Settings",
+    undo: "Undo Move"
   }
 };

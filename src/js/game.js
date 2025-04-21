@@ -197,6 +197,9 @@ class Game {
         // Set up window resize handler
         this._setupResizeHandler();
         
+        // Load settings from local storage
+        this.loadSettings();
+        
         // Start loading resources
         this.resources.loadAll(this.updateLoadingProgress.bind(this))
             .then(() => this.loadLevels())
@@ -629,86 +632,120 @@ class Game {
      * Show pause screen overlay
      */
     showPauseScreen() {
-        // Semi-transparent overlay
-        this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        // Semi-transparent overlay for the background
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         const textX = this.ctx.canvas.width / 2;
-        const textY = this.ctx.canvas.height / 2 - 100;
+        const textY = this.ctx.canvas.height / 2 - 50;
         
-        // Draw pause text
-        this.ctx.font = "30px Arial";
-        this.ctx.textAlign = "center";
-        this.ctx.fillStyle = "white";
-        this.ctx.fillText(this.resources.i18n.get('settings.paused'), textX, textY);
+        // Create a wooden panel for the pause menu (similar to settings dialog)
+        const panelWidth = 400;
+        const panelHeight = 200;
+        const panelX = textX - panelWidth / 2;
+        const panelY = textY - panelHeight / 4;
         
-        // Draw movement speed setting
-        this.ctx.font = "20px Arial";
-        this.ctx.fillText(this.resources.i18n.get('settings.movementSpeed') || "Movement Speed", textX, textY + 60);
-        
-        // Draw speed settings buttons
-        this._drawSpeedButtons(textX, textY + 100);
-        
-        this.ctx.font = "16px Arial";
-        this.ctx.fillText(this.resources.i18n.get('settings.resumeHint'), textX, textY + 180);
-    }
-    
-    /**
-     * Draw speed setting buttons with visual indication of the selected option
-     * @param {number} centerX - Center X position for the buttons
-     * @param {number} y - Y position for the buttons
-     * @private
-     */
-    _drawSpeedButtons(centerX, y) {
-        const buttonWidth = 100;
-        const buttonHeight = 40;
-        const buttonGap = 20;
-        const totalWidth = (buttonWidth * 4) + (buttonGap * 3);
-        const startX = centerX - (totalWidth / 2);
-        
-        const speedOptions = [
-            { key: 'SLOW', label: this.resources.i18n.get('speeds.slow') || 'Slow' },
-            { key: 'NORMAL', label: this.resources.i18n.get('speeds.normal') || 'Normal' },
-            { key: 'FAST', label: this.resources.i18n.get('speeds.fast') || 'Fast' },
-            { key: 'VERY_FAST', label: this.resources.i18n.get('speeds.veryFast') || 'Very Fast' }
-        ];
-        
-        this.ctx.font = "16px Arial";
-        this.ctx.textAlign = "center";
-        
-        // Store button data for click handling
-        if (!this.speedButtons) {
-            this.speedButtons = [];
+        // Draw wooden background
+        if (this.resources.images && this.resources.images.levelBackground && this.resources.images.levelBackground.image) {
+            // Draw the wood panel background
+            this.ctx.save();
+            
+            // Create a clip region for the panel
+            this.ctx.beginPath();
+            this.ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
+            this.ctx.clip();
+            
+            // Draw the background image inside the clipped region
+            this.ctx.drawImage(
+                this.resources.images.levelBackground.image,
+                panelX, 
+                panelY, 
+                panelWidth, 
+                panelHeight
+            );
+            
+            // Add a dark overlay for better text contrast
+            this.ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+            this.ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
+            
+            this.ctx.restore();
+            
+            // Draw border
+            this.ctx.save();
+            this.ctx.strokeStyle = "#3a2214";
+            this.ctx.lineWidth = 8;
+            this.ctx.beginPath();
+            this.ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
+            this.ctx.stroke();
+            this.ctx.restore();
         } else {
-            this.speedButtons.length = 0;
+            // Fallback if image is not available
+            this.ctx.fillStyle = "rgba(101, 67, 33, 0.9)";
+            this.ctx.beginPath();
+            this.ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
+            this.ctx.fill();
+            
+            this.ctx.strokeStyle = "#3a2214";
+            this.ctx.lineWidth = 8;
+            this.ctx.beginPath();
+            this.ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
+            this.ctx.stroke();
         }
         
-        for (let i = 0; i < speedOptions.length; i++) {
-            const x = startX + (i * (buttonWidth + buttonGap));
-            const option = speedOptions[i];
-            const isSelected = this.settings.movementSpeed === option.key;
+        // Draw pause text with shadow for better visibility
+        this.ctx.font = "30px Arial";
+        this.ctx.textAlign = "center";
+        
+        // Text shadow
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        this.ctx.fillText(this.resources.i18n.get('settings.paused'), textX + 2, textY + 2);
+        
+        // Main text
+        this.ctx.fillStyle = "#faf0dc";
+        this.ctx.fillText(this.resources.i18n.get('settings.paused'), textX, textY);
+        
+        // Draw a play/continue button similar to the one on the main screen
+        if (this.resources.images.btnPlay && this.resources.images.btnPlay.image) {
+            const btnPlayImg = this.resources.images.btnPlay.image;
+            const btnX = textX - btnPlayImg.width / 2;
+            const btnY = textY + 40;
+            this.ctx.drawImage(btnPlayImg, btnX, btnY);
             
-            // Store button area for click detection
-            this.speedButtons.push({
-                x: x,
-                y: y,
-                width: buttonWidth,
-                height: buttonHeight,
-                value: option.key
-            });
+            // Get "CONTINUE" text and convert to uppercase
+            const continueText = this.resources.i18n.get('buttons.play').toUpperCase();
             
-            // Draw button background
-            this.ctx.fillStyle = isSelected ? "#4CAF50" : "#555555";
-            this.ctx.fillRect(x, y, buttonWidth, buttonHeight);
+            // Adjust font size based on text length to prevent overflow
+            let fontSize = 30; // Default size
+            if (continueText.length > 10) {
+                fontSize = 24; // Smaller text for longer strings (like French)
+            }
+            if (continueText.length > 15) {
+                fontSize = 20; // Even smaller for very long translations
+            }
             
-            // Draw button border
-            this.ctx.strokeStyle = isSelected ? "#FFFFFF" : "#888888";
-            this.ctx.lineWidth = isSelected ? 2 : 1;
-            this.ctx.strokeRect(x, y, buttonWidth, buttonHeight);
+            this.ctx.font = `bold ${fontSize}px Arial`;
             
-            // Draw button text
+            // Position text centered in the button
+            const btnCenterY = btnY + btnPlayImg.height/2 + 10; // +10 for optical centering
+            
+            // Text shadow for better visibility
+            this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+            this.ctx.fillText(continueText, textX + 2, btnCenterY + 2);
+            
+            // Main text color
             this.ctx.fillStyle = "white";
-            this.ctx.fillText(option.label, x + buttonWidth / 2, y + buttonHeight / 2 + 6);
+            this.ctx.fillText(continueText, textX, btnCenterY);
+        } else {
+            // Fallback hint if button image is not available
+            this.ctx.font = "16px Arial";
+            
+            // Text shadow
+            this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+            this.ctx.fillText(this.resources.i18n.get('settings.resumeHint'), textX + 1, textY + 40 + 1);
+            
+            // Main text
+            this.ctx.fillStyle = "#faf0dc";
+            this.ctx.fillText(this.resources.i18n.get('settings.resumeHint'), textX, textY + 40);
         }
     }
 
@@ -963,6 +1000,7 @@ class Game {
     setMovementSpeed(speedSetting) {
         if (PHYSICS.MOVEMENT_SPEEDS[speedSetting]) {
             this.settings.movementSpeed = speedSetting;
+            this.currentSpeedSetting = speedSetting; // Store the current setting name
             
             // If player exists, update its movement duration
             if (this.player) {
@@ -973,6 +1011,60 @@ class Game {
             if (this.boxes) {
                 this.boxes.movementDuration = this.getMovementDuration();
             }
+            
+            // Save to local storage
+            this.saveSettings();
+        }
+    }
+    
+    /**
+     * Save game settings to local storage
+     */
+    saveSettings() {
+        try {
+            const settings = {
+                movementSpeed: this.settings.movementSpeed,
+                musicEnabled: !this.resources.sound.music.paused
+            };
+            
+            localStorage.setItem('sokoban_settings', JSON.stringify(settings));
+            console.log('Settings saved to local storage');
+        } catch (e) {
+            console.warn('Could not save settings to local storage:', e);
+        }
+    }
+    
+    /**
+     * Load game settings from local storage
+     */
+    loadSettings() {
+        try {
+            const savedSettings = localStorage.getItem('sokoban_settings');
+            
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                
+                // Apply movement speed if valid
+                if (settings.movementSpeed && PHYSICS.MOVEMENT_SPEEDS[settings.movementSpeed]) {
+                    this.settings.movementSpeed = settings.movementSpeed;
+                    this.currentSpeedSetting = settings.movementSpeed;
+                    console.log(`Loaded movement speed: ${settings.movementSpeed}`);
+                }
+                
+                // Apply music setting if defined
+                if (settings.musicEnabled !== undefined) {
+                    if (settings.musicEnabled) {
+                        // Only play music automatically in intro screen
+                        if (this.state === GAME_STATES.INTRO) {
+                            this.resources.playBackgroundMusic();
+                        }
+                    } else {
+                        this.resources.sound.music.pause();
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Could not load settings from local storage:', e);
         }
     }
 }

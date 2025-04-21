@@ -4,26 +4,27 @@
 export default {
   title: "Sokoban",
   menu: {
-    newGame: "Nouveau jeu",
+    newGame: "Nouveau Jeu",
     continue: "Continuer",
-    selectLevel: "Sélectionner niveau",
+    selectLevel: "Sélectionner le niveau",
     settings: "Paramètres",
     help: "Aide",
-    about: "À propos"
+    about: "À propos",
+    play: "Jouer"
   },
   game: {
     level: "Niveau",
-    moves: "Déplacements",
+    moves: "Mouvements",
     pushes: "Poussées",
     time: "Temps",
-    restart: "Redémarrer niveau",
-    undo: "Annuler mouvement",
+    restart: "Redémarrer le niveau",
+    undo: "Annuler le mouvement",
     completed: "Niveau terminé !",
     nextLevel: "Appuyez sur Espace pour continuer",
     victory: "Félicitations !",
     allLevelsComplete: "Félicitations ! Vous avez terminé tous les niveaux !",
-    confirmExit: "Retour au menu principal ?",
-    confirmRestart: "Êtes-vous sûr de vouloir redémarrer le niveau ?",
+    confirmExit: "Retourner au menu principal ?",
+    confirmRestart: "Êtes-vous sûr de vouloir redémarrer ce niveau ?",
     loading: "Chargement..."
   },
   settings: {
@@ -36,7 +37,16 @@ export default {
     off: "Désactivé",
     paused: "PAUSE",
     resumeHint: "Appuyez sur ÉCHAP ou P pour reprendre",
-    movementSpeed: "Vitesse de déplacement"
+    movementSpeed: "Vitesse de déplacement",
+    playerSpeed: "Vitesse du joueur",
+    slowSpeed: "Lente",
+    normalSpeed: "Normale",
+    fastSpeed: "Rapide",
+    veryFastSpeed: "Très rapide",
+    musicOn: "Musique activée",
+    musicOff: "Musique désactivée",
+    navigation: "Navigation",
+    openSettings: "Ouvrir les paramètres"
   },
   speeds: {
     slow: "Lente",
@@ -55,10 +65,12 @@ export default {
   buttons: {
     play: "Jouer",
     home: "Accueil",
-    levelSelect: "Sélectionner niveau",
+    levelSelect: "Sélectionner le niveau",
     restart: "Redémarrer",
-    toggleMusic: "Activer/Désactiver musique",
+    toggleMusic: "Activer/désactiver la musique",
     pause: "Mettre en pause",
-    close: "Fermer"
+    close: "Fermer",
+    settings: "Paramètres",
+    undo: "Annuler"
   }
 };

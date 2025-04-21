@@ -6,23 +6,24 @@ export default {
   menu: {
     newGame: "Nová hra",
     continue: "Pokračovat",
-    selectLevel: "Výběr úrovně",
+    selectLevel: "Vybrat úroveň",
     settings: "Nastavení",
     help: "Nápověda",
-    about: "O hře"
+    about: "O hře",
+    play: "Hrát"
   },
   game: {
     level: "Úroveň",
-    moves: "Tahů",
-    pushes: "Tlačení",
+    moves: "Tahy",
+    pushes: "Posunutí",
     time: "Čas",
     restart: "Restartovat úroveň",
-    undo: "Vrátit tah",
+    undo: "Vzít zpět",
     completed: "Úroveň dokončena!",
     nextLevel: "Stiskněte mezerník pro pokračování",
     victory: "Gratulujeme!",
     allLevelsComplete: "Gratulujeme! Dokončili jste všechny úrovně!",
-    confirmExit: "Návrat do hlavního menu?",
+    confirmExit: "Vrátit se do hlavního menu?",
     confirmRestart: "Opravdu chcete restartovat tuto úroveň?",
     loading: "Načítání..."
   },
@@ -34,9 +35,18 @@ export default {
     back: "Zpět",
     on: "Zapnuto",
     off: "Vypnuto",
-    paused: "PAUZA",
+    paused: "POZASTAVENO",
     resumeHint: "Stiskněte ESC nebo P pro pokračování",
-    movementSpeed: "Rychlost pohybu"
+    movementSpeed: "Rychlost pohybu",
+    playerSpeed: "Rychlost hráče",
+    slowSpeed: "Pomalá",
+    normalSpeed: "Normální",
+    fastSpeed: "Rychlá",
+    veryFastSpeed: "Velmi rychlá",
+    musicOn: "Hudba zapnuta",
+    musicOff: "Hudba vypnuta",
+    navigation: "Navigace",
+    openSettings: "Otevřít nastavení"
   },
   speeds: {
     slow: "Pomalá",
@@ -50,15 +60,17 @@ export default {
     loading: "Načítání"
   },
   error: {
-    loading: "Chyba při načítání herních zdrojů. Prosím obnovte stránku."
+    loading: "Chyba při načítání zdrojů hry. Prosím, obnovte stránku."
   },
   buttons: {
     play: "Hrát",
     home: "Domů",
     levelSelect: "Výběr úrovně",
-    restart: "Restartovat",
-    toggleMusic: "Zapnout/vypnout hudbu",
+    restart: "Restart",
+    toggleMusic: "Přepnout hudbu",
     pause: "Pozastavit hru",
-    close: "Zavřít"
+    close: "Zavřít",
+    settings: "Nastavení",
+    undo: "Zpět"
   }
 };

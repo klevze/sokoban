@@ -6,23 +6,24 @@ export default {
   menu: {
     newGame: "Nová hra",
     continue: "Pokračovať",
-    selectLevel: "Výber úrovne",
+    selectLevel: "Vybrať úroveň",
     settings: "Nastavenia",
     help: "Pomoc",
-    about: "O hre"
+    about: "O hre",
+    play: "Hrať"
   },
   game: {
     level: "Úroveň",
-    moves: "Ťahov",
-    pushes: "Tlačení",
+    moves: "Ťahy",
+    pushes: "Posunutia",
     time: "Čas",
     restart: "Reštartovať úroveň",
-    undo: "Vrátiť ťah",
+    undo: "Krok späť",
     completed: "Úroveň dokončená!",
     nextLevel: "Stlačte medzerník pre pokračovanie",
-    victory: "Blahoželáme!",
-    allLevelsComplete: "Blahoželáme! Dokončili ste všetky úrovne!",
-    confirmExit: "Návrat do hlavného menu?",
+    victory: "Gratulujeme!",
+    allLevelsComplete: "Gratulujeme! Dokončili ste všetky úrovne!",
+    confirmExit: "Vrátiť sa do hlavného menu?",
     confirmRestart: "Naozaj chcete reštartovať túto úroveň?",
     loading: "Načítavanie..."
   },
@@ -34,9 +35,17 @@ export default {
     back: "Späť",
     on: "Zapnuté",
     off: "Vypnuté",
-    paused: "PAUZA",
+    paused: "POZASTAVENÉ",
     resumeHint: "Stlačte ESC alebo P pre pokračovanie",
-    movementSpeed: "Rýchlosť pohybu"
+    movementSpeed: "Rýchlosť pohybu",
+    playerSpeed: "Rýchlosť hráča",
+    slowSpeed: "Pomalá",
+    normalSpeed: "Normálna",
+    fastSpeed: "Rýchla",
+    veryFastSpeed: "Veľmi rýchla",
+    musicOn: "Hudba zapnutá",
+    musicOff: "Hudba vypnutá",
+    navigation: "Navigácia"
   },
   speeds: {
     slow: "Pomalá",
@@ -50,15 +59,17 @@ export default {
     loading: "Načítavanie"
   },
   error: {
-    loading: "Chyba pri načítavaní herných zdrojov. Prosím obnovte stránku."
+    loading: "Chyba pri načítavaní zdrojov hry. Prosím, obnovte stránku."
   },
   buttons: {
     play: "Hrať",
     home: "Domov",
     levelSelect: "Výber úrovne",
-    restart: "Reštartovať",
-    toggleMusic: "Zapnúť/vypnúť hudbu",
+    restart: "Reštart",
+    toggleMusic: "Prepnúť hudbu",
     pause: "Pozastaviť hru",
-    close: "Zavrieť"
+    close: "Zavrieť",
+    settings: "Nastavenia",
+    undo: "Späť"
   }
 };

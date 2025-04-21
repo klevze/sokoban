@@ -180,6 +180,37 @@ export class Boxes {
     }
 
     /**
+     * Move a box from one position to another in reverse (for undo functionality)
+     * This method is used by the undo functionality to revert box movements
+     * 
+     * @param {number} fromX - Current X position to move from
+     * @param {number} fromY - Current Y position to move from
+     * @param {number} toX - Target X position to move to
+     * @param {number} toY - Target Y position to move to
+     * @returns {boolean} - True if the move was successful
+     */
+    undoMove(fromX, fromY, toX, toY) {
+        // Find the box at the 'from' position
+        const boxIndex = this.boxes.findIndex(box => box.x === fromX && box.y === fromY);
+        
+        if (boxIndex === -1) {
+            console.error(`No box found at position ${fromX},${fromY} for undo operation`);
+            return false;
+        }
+        
+        const box = this.boxes[boxIndex];
+        
+        // Directly update box position (no animation for undo)
+        box.x = toX;
+        box.y = toY;
+        
+        // Check if box is now on a goal and update its appearance
+        this.updateBoxState(box, toX, toY);
+        
+        return true;
+    }
+
+    /**
      * Checks if the given position is a goal
      * Delegates to the Goal class to determine if coordinates match a goal position
      * 

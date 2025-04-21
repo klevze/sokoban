@@ -4,61 +4,72 @@
 export default {
   title: "Sokoban",
   menu: {
-    newGame: "Нова игра",
-    continue: "Настави",
-    selectLevel: "Изабери ниво",
-    settings: "Подешавања",
-    help: "Помоћ",
-    about: "О игри"
+    newGame: "Nova igra",
+    continue: "Nastavi",
+    selectLevel: "Izaberi nivo",
+    settings: "Podešavanja",
+    help: "Pomoć",
+    about: "O igri",
+    play: "Igraj"
   },
   game: {
-    level: "Ниво",
-    moves: "Потези",
-    pushes: "Гурања",
-    time: "Време",
-    restart: "Рестартуј ниво",
-    undo: "Поништи потез",
-    completed: "Ниво завршен!",
-    nextLevel: "Притисните Размак за наставак",
-    victory: "Честитамо!",
-    allLevelsComplete: "Честитамо! Завршили сте све нивое!",
-    confirmExit: "Повратак на главни мени?",
-    confirmRestart: "Да ли сте сигурни да желите да рестартујете ниво?",
-    loading: "Учитавање..."
+    level: "Nivo",
+    moves: "Potezi",
+    pushes: "Guranja",
+    time: "Vreme",
+    restart: "Ponovo pokreni nivo",
+    undo: "Poništi potez",
+    completed: "Nivo završen!",
+    nextLevel: "Pritisni Space za nastavak",
+    victory: "Čestitamo!",
+    allLevelsComplete: "Čestitamo! Završili ste sve nivoe!",
+    confirmExit: "Vratiti se na glavni meni?",
+    confirmRestart: "Da li ste sigurni da želite ponovo pokrenuti ovaj nivo?",
+    loading: "Učitavanje..."
   },
   settings: {
-    language: "Језик",
-    sound: "Звук",
-    music: "Музика",
-    controls: "Контроле",
-    back: "Назад",
-    on: "Укључено",
-    off: "Искључено",
-    paused: "ПАУЗА",
-    resumeHint: "Притисните ESC или P за наставак",
-    movementSpeed: "Брзина кретања"
+    language: "Jezik",
+    sound: "Zvuk",
+    music: "Muzika",
+    controls: "Kontrole",
+    back: "Nazad",
+    on: "Uključeno",
+    off: "Isključeno",
+    paused: "PAUZIRANO",
+    resumeHint: "Pritisni ESC ili P za nastavak",
+    movementSpeed: "Brzina kretanja",
+    playerSpeed: "Brzina igrača",
+    slowSpeed: "Sporo",
+    normalSpeed: "Normalno",
+    fastSpeed: "Brzo",
+    veryFastSpeed: "Veoma brzo",
+    musicOn: "Muzika uključena",
+    musicOff: "Muzika isključena",
+    navigation: "Navigacija"
   },
   speeds: {
-    slow: "Споро",
-    normal: "Нормално",
-    fast: "Брзо",
-    veryFast: "Веома брзо"
+    slow: "Sporo",
+    normal: "Normalno",
+    fast: "Brzo",
+    veryFast: "Veoma brzo"
   },
   loading: {
-    title: "Учитавање",
-    preparing: "Притисните Размак за учитавање игре",
-    loading: "Учитавање"
+    title: "Učitavanje",
+    preparing: "Pritisni Space za učitavanje igre",
+    loading: "Učitavanje"
   },
   error: {
-    loading: "Грешка приликом учитавања ресурса игре. Молимо освежите страницу."
+    loading: "Greška pri učitavanju resursa igre. Molim, osvežite stranicu."
   },
   buttons: {
-    play: "Играј",
-    home: "Почетна",
-    levelSelect: "Избор нивоа",
-    restart: "Рестартуј",
-    toggleMusic: "Укључи/искључи музику",
-    pause: "Паузирај игру",
-    close: "Затвори"
+    play: "Igraj",
+    home: "Početna",
+    levelSelect: "Odabir nivoa",
+    restart: "Ponovo pokreni",
+    toggleMusic: "Uključi/isključi muziku",
+    pause: "Pauziraj igru",
+    close: "Zatvori",
+    settings: "Podešavanja",
+    undo: "Poništi"
   }
 };

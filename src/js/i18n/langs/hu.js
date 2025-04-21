@@ -6,24 +6,25 @@ export default {
   menu: {
     newGame: "Új játék",
     continue: "Folytatás",
-    selectLevel: "Pálya választása",
+    selectLevel: "Szint kiválasztása",
     settings: "Beállítások",
-    help: "Segítség",
-    about: "Névjegy"
+    help: "Súgó",
+    about: "Névjegy",
+    play: "Játék"
   },
   game: {
-    level: "Pálya",
+    level: "Szint",
     moves: "Lépések",
     pushes: "Tolások",
     time: "Idő",
-    restart: "Újrakezdés",
+    restart: "Szint újraindítása",
     undo: "Visszavonás",
-    completed: "Pálya teljesítve!",
-    nextLevel: "Nyomj szóközt a folytatáshoz",
+    completed: "Szint teljesítve!",
+    nextLevel: "Nyomj Szóközt a folytatáshoz",
     victory: "Gratulálunk!",
-    allLevelsComplete: "Gratulálunk! Minden pályát teljesítettél!",
-    confirmExit: "Vissza a főmenübe?",
-    confirmRestart: "Biztosan újra szeretnéd kezdeni a pályát?",
+    allLevelsComplete: "Gratulálunk! Minden szintet teljesítettél!",
+    confirmExit: "Visszatérés a főmenübe?",
+    confirmRestart: "Biztosan újra szeretnéd kezdeni ezt a szintet?",
     loading: "Betöltés..."
   },
   settings: {
@@ -36,7 +37,15 @@ export default {
     off: "Ki",
     paused: "SZÜNET",
     resumeHint: "Nyomj ESC-et vagy P-t a folytatáshoz",
-    movementSpeed: "Mozgási sebesség"
+    movementSpeed: "Mozgási sebesség",
+    playerSpeed: "Játékos sebessége",
+    slowSpeed: "Lassú",
+    normalSpeed: "Normál",
+    fastSpeed: "Gyors",
+    veryFastSpeed: "Nagyon gyors",
+    musicOn: "Zene bekapcsolva",
+    musicOff: "Zene kikapcsolva",
+    navigation: "Navigáció"
   },
   speeds: {
     slow: "Lassú",
@@ -46,19 +55,21 @@ export default {
   },
   loading: {
     title: "Betöltés",
-    preparing: "Nyomj szóközt a játék betöltéséhez",
+    preparing: "Nyomj Szóközt a játék betöltéséhez",
     loading: "Betöltés"
   },
   error: {
-    loading: "Hiba a játék erőforrásainak betöltésekor. Kérjük, frissítsd az oldalt."
+    loading: "Hiba a játékforrások betöltésekor. Kérjük, frissítsd az oldalt."
   },
   buttons: {
     play: "Játék",
     home: "Főoldal",
-    levelSelect: "Pálya választása",
-    restart: "Újrakezdés",
-    toggleMusic: "Zene be/ki",
+    levelSelect: "Szint kiválasztása",
+    restart: "Újraindítás",
+    toggleMusic: "Zene ki/be",
     pause: "Játék szüneteltetése",
-    close: "Bezárás"
+    close: "Bezárás",
+    settings: "Beállítások",
+    undo: "Visszavonás"
   }
 };

@@ -9,22 +9,23 @@ export default {
     selectLevel: "Level auswählen",
     settings: "Einstellungen",
     help: "Hilfe",
-    about: "Über"
+    about: "Über",
+    play: "Spielen"
   },
   game: {
     level: "Level",
     moves: "Züge",
     pushes: "Schübe",
     time: "Zeit",
-    restart: "Level neu starten",
-    undo: "Zug rückgängig",
-    completed: "Level geschafft!",
+    restart: "Level neustarten",
+    undo: "Zug rückgängig machen",
+    completed: "Level abgeschlossen!",
     nextLevel: "Drücke Leertaste zum Fortfahren",
     victory: "Glückwunsch!",
     allLevelsComplete: "Glückwunsch! Du hast alle Level abgeschlossen!",
     confirmExit: "Zurück zum Hauptmenü?",
-    confirmRestart: "Bist du sicher, dass du das Level neu starten möchtest?",
-    loading: "Wird geladen..."
+    confirmRestart: "Bist du sicher, dass du das Level neustarten möchtest?",
+    loading: "Lädt..."
   },
   settings: {
     language: "Sprache",
@@ -36,7 +37,16 @@ export default {
     off: "Aus",
     paused: "PAUSIERT",
     resumeHint: "Drücke ESC oder P zum Fortsetzen",
-    movementSpeed: "Bewegungsgeschwindigkeit"
+    movementSpeed: "Bewegungsgeschwindigkeit",
+    playerSpeed: "Spielergeschwindigkeit",
+    slowSpeed: "Langsam",
+    normalSpeed: "Normal",
+    fastSpeed: "Schnell",
+    veryFastSpeed: "Sehr schnell",
+    musicOn: "Musik an",
+    musicOff: "Musik aus",
+    navigation: "Navigation",
+    openSettings: "Einstellungen öffnen"
   },
   speeds: {
     slow: "Langsam",
@@ -56,9 +66,11 @@ export default {
     play: "Spielen",
     home: "Hauptmenü",
     levelSelect: "Level auswählen",
-    restart: "Neu starten",
-    toggleMusic: "Musik ein/aus",
+    restart: "Neustarten",
+    toggleMusic: "Musik umschalten",
     pause: "Spiel pausieren",
-    close: "Schließen"
+    close: "Schließen",
+    settings: "Einstellungen",
+    undo: "Rückgängig"
   }
 };

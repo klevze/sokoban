@@ -9,21 +9,22 @@ export default {
     selectLevel: "Odaberi razinu",
     settings: "Postavke",
     help: "Pomoć",
-    about: "O nama"
+    about: "O igri",
+    play: "Igraj"
   },
   game: {
     level: "Razina",
     moves: "Potezi",
     pushes: "Guranja",
     time: "Vrijeme",
-    restart: "Ponovi razinu",
+    restart: "Ponovno pokreni razinu",
     undo: "Poništi potez",
     completed: "Razina završena!",
-    nextLevel: "Pritisni razmak za nastavak",
+    nextLevel: "Pritisni razmaknicu za nastavak",
     victory: "Čestitamo!",
     allLevelsComplete: "Čestitamo! Završili ste sve razine!",
-    confirmExit: "Povratak na glavni izbornik?",
-    confirmRestart: "Jeste li sigurni da želite ponovno pokrenuti razinu?",
+    confirmExit: "Vratiti se na glavni izbornik?",
+    confirmRestart: "Jeste li sigurni da želite ponovno pokrenuti ovu razinu?",
     loading: "Učitavanje..."
   },
   settings: {
@@ -35,8 +36,17 @@ export default {
     on: "Uključeno",
     off: "Isključeno",
     paused: "PAUZIRANO",
-    resumeHint: "Pritisnite ESC ili P za nastavak",
-    movementSpeed: "Brzina kretanja"
+    resumeHint: "Pritisni ESC ili P za nastavak",
+    movementSpeed: "Brzina kretanja",
+    playerSpeed: "Brzina igrača",
+    slowSpeed: "Sporo",
+    normalSpeed: "Normalno",
+    fastSpeed: "Brzo",
+    veryFastSpeed: "Vrlo brzo",
+    musicOn: "Glazba uključena",
+    musicOff: "Glazba isključena",
+    navigation: "Navigacija",
+    openSettings: "Otvori postavke"
   },
   speeds: {
     slow: "Sporo",
@@ -46,19 +56,21 @@ export default {
   },
   loading: {
     title: "Učitavanje",
-    preparing: "Pritisni razmak za učitavanje igre",
+    preparing: "Pritisni razmaknicu za učitavanje igre",
     loading: "Učitavanje"
   },
   error: {
-    loading: "Greška prilikom učitavanja resursa igre. Molimo osvježite stranicu."
+    loading: "Greška pri učitavanju resursa igre. Molimo osvježite stranicu."
   },
   buttons: {
     play: "Igraj",
     home: "Početna",
-    levelSelect: "Odaberi razinu",
-    restart: "Ponovi",
+    levelSelect: "Odabir razine",
+    restart: "Ponovno pokreni",
     toggleMusic: "Uključi/isključi glazbu",
     pause: "Pauziraj igru",
-    close: "Zatvori"
+    close: "Zatvori",
+    settings: "Postavke",
+    undo: "Poništi"
   }
 };
