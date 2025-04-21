@@ -8,6 +8,7 @@ package-lock.json
 # Build outputs
 /dist
 /build
+/tileset
 /.vite
 
 # Environment variables
