@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "Sokoban - HTML5 Canvas Game",
   "devDependencies": {
+    "glob": "^11.0.1",
     "sass": "^1.86.3",
     "vite": "^6.3.2"
   }

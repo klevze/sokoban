@@ -4,6 +4,7 @@ import * as sass from 'sass';
 import sassOptions from './sassOptions.js';
 import { copyFileSync, mkdirSync, readdirSync, statSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
+import { execSync } from 'child_process';  // Added for executing the combine script
 
 // Function to copy directory recursively
 function copyDir(src, dest) {
@@ -68,8 +69,24 @@ export default defineConfig({
       },
     },
   },
-  // Custom plugin to copy assets folder
+  // Custom plugins
   plugins: [
+    // Level combining plugin
+    {
+      name: 'combine-levels-plugin',
+      apply: 'build', // Run only during build
+      buildStart() {
+        try {
+          console.log('Combining level files...');
+          // Run the combine-levels script
+          const scriptPath = resolve(__dirname, 'build-scripts/combine-levels.js');
+          execSync(`node "${scriptPath}"`, { stdio: 'inherit' });
+        } catch (error) {
+          console.error(`Error combining level files: ${error.message}`);
+        }
+      }
+    },
+    // Copy assets plugin
     {
       name: 'copy-assets-plugin',
       apply: 'build',

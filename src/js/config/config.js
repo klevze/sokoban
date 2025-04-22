@@ -30,7 +30,7 @@ export const TILES = {
   SOURCE_SIZE: 96,           // Size of tiles in the source image (px) - Updated from 32px to 96px
   OUTPUT_SIZE: 40,           // Size of tiles when rendered on screen (px)
   PLAYER_SOURCE_SIZE: 32,    // Size of player sprite in source image
-  PLAYER_EXTRA_SIZE: 10,     // Extra pixels added to player sprite for better appearance
+  PLAYER_EXTRA_SIZE: 4,     // Extra pixels added to player sprite for better appearance
   WALKABLE_TILES: [10, 17, 18, 19, 20, 71, 72, 73, 74, 81, 82, 83, 84, 88, 89, 90, 22, 23, 24, 25, 32, 33, 34, 35, 42, 43, 44, 45],
 };
 
