@@ -17,6 +17,7 @@ export default {
     moves: "Potezi",
     pushes: "Guranja",
     time: "Vrijeme",
+    timeGoal: "Cilj",
     restart: "Ponovno pokreni razinu",
     undo: "Poništi potez",
     completed: "Razina završena!",
@@ -27,6 +28,15 @@ export default {
     confirmRestart: "Jeste li sigurni da želite ponovno pokrenuti ovu razinu?",
     loading: "Učitavanje..."
   },
+  gameModes: {
+    select: "Odaberite Način Igre",
+    normal: "NORMALNI NAČIN",
+    timeAttack: "VREMENSKI NAPAD",
+    challenge: "NAČIN IZAZOVA",
+    normalDescription: "Standardna igra bez vremenskih ograničenja",
+    timeAttackDescription: "Utrkujte se s vremenom za najbolje vrijeme",
+    challengeDescription: "Ograničeni potezi i vrijeme - možete li pobijediti?"
+  },
   settings: {
     language: "Jezik",
     sound: "Zvuk",
@@ -36,7 +46,7 @@ export default {
     on: "Uključeno",
     off: "Isključeno",
     paused: "PAUZIRANO",
-    resumeHint: "Pritisni ESC ili P za nastavak",
+    resumeHint: "Pritisnite ESC ili P za nastavak",
     movementSpeed: "Brzina kretanja",
     playerSpeed: "Brzina igrača",
     slowSpeed: "Sporo",
@@ -71,6 +81,29 @@ export default {
     pause: "Pauziraj igru",
     close: "Zatvori",
     settings: "Postavke",
-    undo: "Poništi"
+    undo: "Poništi",
+    levelEditor: "Uređivač razina",
+    back: "Natrag"
+  },
+  levelSelect: {
+    title: "Odabir razine"
+  },
+  auth: {
+    signIn: "Prijava",
+    signOut: "Odjava",
+    register: "Registracija",
+    account: "Račun",
+    name: "Ime",
+    email: "E-pošta",
+    password: "Lozinka",
+    confirmPassword: "Potvrdi lozinku",
+    signingIn: "Prijava u tijeku...",
+    registering: "Registracija u tijeku...",
+    fillAllFields: "Molimo ispunite sva polja",
+    passwordsDoNotMatch: "Lozinke se ne podudaraju",
+    passwordTooShort: "Lozinka mora imati najmanje 6 znakova",
+    loginFailed: "Prijava neuspješna. Provjerite svoje podatke.",
+    registrationFailed: "Registracija neuspješna. Pokušajte ponovno.",
+    progressLoaded: "Napredak učitan iz oblaka"
   }
 };

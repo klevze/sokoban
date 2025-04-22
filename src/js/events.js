@@ -1,5 +1,5 @@
 // Import dependencies
-import { GAME_STATES, DEBUG } from './config/config.js';
+import { GAME_STATES, DEBUG, GAME_MODES } from './config/config.js';
 import { game } from './game.js';
 
 // Track if loading text element has been created
@@ -623,7 +623,7 @@ function handleCanvasClick(event, gameInstance) {
         // Check if play button was clicked
         const btnPlayImg = gameInstance.resources.images.btnPlay.image;
         const btnX = mainCanvas.width / 2 - btnPlayImg.width / 2;
-        const btnY = mainCanvas.height * 0.8; // Use the same dynamic position as in showIntroScreen
+        const btnY = mainCanvas.height * 0.7; // Use the same dynamic position as in showIntroScreen
         
         const btnWidth = btnPlayImg.width;
         const btnHeight = btnPlayImg.height;
@@ -632,10 +632,15 @@ function handleCanvasClick(event, gameInstance) {
             // Stop all sounds including music when starting a new game
             gameInstance.resources.stopAllSounds(true);
             
-            // Reset to level 1 when clicking the PLAY button
-            gameInstance.setCurrentLevel(0); // Level 0 is the first level (displayed as level 1)
-            gameInstance.changeLevel(0);
-            gameInstance.setState(GAME_STATES.PLAY);
+            // Transition to game mode selection screen instead of directly starting the game
+            gameInstance.setState(GAME_STATES.GAME_MODE_SELECT);
+        }
+        
+        // Check if level editor button was clicked
+        const editorY = btnY + btnPlayImg.height + 20;
+        if (mouseX >= btnX && mouseX <= btnX + btnWidth && mouseY >= editorY && mouseY <= editorY + btnHeight) {
+            // Open the level editor
+            gameInstance.openLevelEditor();
         }
     } else if (gameInstance.state === GAME_STATES.WIN) {
         // Handle clicks on win screen (advance to next level)
@@ -684,6 +689,11 @@ function handleCanvasClick(event, gameInstance) {
         if (isOutsideButtonArea) {
             gameInstance.setState(GAME_STATES.PLAY);
         }
+    } else if (gameInstance.state === GAME_STATES.EDITOR) {
+        // Let the editor handle its own clicks
+        // No action needed here as the editor has its own event handlers
+    } else if (gameInstance.state === GAME_STATES.GAME_MODE_SELECT) {
+        handleGameModeSelectionClick(event, gameInstance);
     }
 }
 
@@ -693,7 +703,11 @@ function handleSpaceKey(gameInstance) {
             gameInstance.setState(GAME_STATES.INTRO);
             break;
         case GAME_STATES.INTRO:
-            gameInstance.setState(GAME_STATES.PLAY);
+            // Stop all sounds including music when starting a new game
+            gameInstance.resources.stopAllSounds(true);
+            
+            // Transition to game mode selection screen instead of directly starting the game
+            gameInstance.setState(GAME_STATES.GAME_MODE_SELECT);
             break;
         case GAME_STATES.WIN:
             // Stop all sounds including music when progressing to next level
@@ -727,7 +741,15 @@ function handleRKey(gameInstance) {
     }
 }
 
-function showLevelSelectDialog(gameInstance) {
+export function showLevelSelectDialog(gameInstance) {
+    // First check if the modal already exists to prevent infinite loops
+    const existingModal = document.getElementById('level-select-modal');
+    if (existingModal) {
+        // If the modal already exists, just make sure it's visible and return
+        existingModal.style.display = 'flex';
+        return;
+    }
+    
     // Create modal container
     const modal = document.createElement('div');
     modal.id = 'level-select-modal';
@@ -769,162 +791,235 @@ function showLevelSelectDialog(gameInstance) {
     textureOverlay.style.pointerEvents = 'none';
     dialog.appendChild(textureOverlay);
 
-    // Add title with better styling
+    // Create title
     const title = document.createElement('h2');
-    title.textContent = gameInstance.resources.i18n.get('menu.selectLevel');
-    title.style.color = '#faf0dc';
+    title.textContent = gameInstance.resources.i18n.get('levelSelect.title') || 'Select Level';
+    title.style.color = '#ffd700';
     title.style.textAlign = 'center';
-    title.style.margin = '0 0 15px 0';
+    title.style.margin = '10px 0 20px 0';
+    title.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
     title.style.fontFamily = 'Arial, sans-serif';
-    title.style.fontSize = '24px';
-    title.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.7)';
-    title.style.position = 'relative';
-    title.style.zIndex = '2';
     dialog.appendChild(title);
 
-    // Add close button
-    const closeButton = document.createElement('button');
-    closeButton.innerHTML = '&times;';  // × symbol
-    closeButton.style.position = 'absolute';
-    closeButton.style.top = '10px';
-    closeButton.style.right = '10px';
-    closeButton.style.background = 'rgba(150, 80, 30, 0.7)';
-    closeButton.style.border = '2px solid #fbefd5';
-    closeButton.style.borderRadius = '50%';
-    closeButton.style.color = '#faf0dc';
-    closeButton.style.fontSize = '20px';
-    closeButton.style.cursor = 'pointer';
-    closeButton.style.width = '30px';
-    closeButton.style.height = '30px';
-    closeButton.style.display = 'flex';
-    closeButton.style.justifyContent = 'center';
-    closeButton.style.alignItems = 'center';
-    closeButton.style.padding = '0';
-    closeButton.style.lineHeight = '0';  // Fix vertical alignment
-    closeButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.5)';
-    closeButton.style.zIndex = '2';
-    closeButton.title = gameInstance.resources.i18n.get('buttons.close');
-    closeButton.onclick = () => {
-        document.body.removeChild(modal);
-    };
-    // Hover effect for close button
-    closeButton.onmouseover = () => {
-        closeButton.style.background = 'rgba(180, 100, 40, 0.9)';
-        closeButton.style.transform = 'scale(1.05)';
-    };
-    closeButton.onmouseout = () => {
-        closeButton.style.background = 'rgba(150, 80, 30, 0.7)';
-        closeButton.style.transform = 'scale(1)';
-    };
-    dialog.appendChild(closeButton);
+    // Create subtitle with game mode info
+    const subtitle = document.createElement('h3');
+    let gameModeText = '';
+    switch (gameInstance.gameMode) {
+        case GAME_MODES.NORMAL:
+            gameModeText = 'Normal Mode';
+            break;
+        case GAME_MODES.TIME_ATTACK:
+            gameModeText = 'Time Attack Mode';
+            break;
+        case GAME_MODES.CHALLENGE:
+            gameModeText = 'Challenge Mode';
+            break;
+    }
+    subtitle.textContent = gameModeText;
+    subtitle.style.color = '#ffaa00';
+    subtitle.style.textAlign = 'center';
+    subtitle.style.margin = '0 0 20px 0';
+    subtitle.style.fontFamily = 'Arial, sans-serif';
+    dialog.appendChild(subtitle);
 
-    // Create level container for the grid - no scrolling needed now
+    // Create levels container
     const levelsContainer = document.createElement('div');
-    levelsContainer.style.position = 'relative';
-    levelsContainer.style.zIndex = '2';
-    levelsContainer.style.backgroundColor = 'rgba(0,0,0,0.1)';
-    levelsContainer.style.borderRadius = '8px';
-    levelsContainer.style.padding = '15px';
-    levelsContainer.style.boxShadow = 'inset 0 0 5px rgba(0,0,0,0.3)';
-    
-    // Create level grid container - adjust the columns based on total levels
-    const levelsGrid = document.createElement('div');
-    const totalLevels = gameInstance.levelsData.length;
-    
-    // Determine optimal grid columns (more columns for more levels)
-    let columns = 5;
-    if (totalLevels > 25) columns = 8;
-    else if (totalLevels > 15) columns = 6;
-    
-    levelsGrid.style.display = 'grid';
-    levelsGrid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-    levelsGrid.style.gap = '8px';
-    
-    // Generate smaller level buttons
-    for (let i = 0; i < totalLevels; i++) {
-        // Create button container
-        const buttonContainer = document.createElement('div');
-        buttonContainer.style.position = 'relative';
-        buttonContainer.style.width = '100%';
-        buttonContainer.style.paddingBottom = '100%'; // Keep aspect ratio square
+    levelsContainer.style.overflowY = 'auto';
+    levelsContainer.style.maxHeight = '400px';
+    levelsContainer.style.padding = '10px';
+    levelsContainer.style.backgroundColor = 'rgba(0,0,0,0.2)';
+    levelsContainer.style.borderRadius = '10px';
+    levelsContainer.style.margin = '0 auto';
+    levelsContainer.style.width = '95%';
+
+    // Create a list layout for levels instead of grid
+    const levelsList = document.createElement('div');
+    levelsList.style.display = 'flex';
+    levelsList.style.flexDirection = 'column';
+    levelsList.style.gap = '8px';
+
+    // Define function to format time for display
+    const formatTime = (milliseconds) => {
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    // Create level rows
+    for (let i = 0; i < gameInstance.levelsData.length; i++) {
+        // Create level row container
+        const levelRow = document.createElement('div');
+        levelRow.style.display = 'flex';
+        levelRow.style.alignItems = 'center';
+        levelRow.style.backgroundColor = 'rgba(50, 30, 20, 0.7)';
+        levelRow.style.borderRadius = '6px';
+        levelRow.style.padding = '8px 12px';
+        levelRow.style.cursor = 'pointer';
+        levelRow.style.transition = 'all 0.2s';
+        levelRow.style.border = i === gameInstance.currentLevel ? '2px solid #ffd700' : '2px solid transparent';
         
-        // Create the styled button
+        // Highlight current level
+        if (i === gameInstance.currentLevel) {
+            levelRow.style.backgroundColor = 'rgba(70, 40, 20, 0.8)';
+        }
+
+        // Add hover effects
+        levelRow.onmouseover = () => {
+            levelRow.style.backgroundColor = 'rgba(80, 50, 20, 0.8)';
+            levelRow.style.transform = 'translateY(-2px)';
+        };
+        
+        levelRow.onmouseout = () => {
+            levelRow.style.backgroundColor = i === gameInstance.currentLevel ? 'rgba(70, 40, 20, 0.8)' : 'rgba(50, 30, 20, 0.7)';
+            levelRow.style.transform = 'translateY(0)';
+        };
+
+        // Level number indicator
         const levelNumber = document.createElement('div');
         levelNumber.textContent = (i + 1).toString();
-        levelNumber.style.position = 'absolute';
-        levelNumber.style.top = '0';
-        levelNumber.style.left = '0';
-        levelNumber.style.width = '100%';
-        levelNumber.style.height = '100%';
-        levelNumber.style.display = 'flex';
-        levelNumber.style.justifyContent = 'center';
-        levelNumber.style.alignItems = 'center';
-        levelNumber.style.fontSize = '16px';
         levelNumber.style.fontWeight = 'bold';
-        levelNumber.style.color = '#faf0dc';
-        levelNumber.style.textShadow = '1px 1px 1px #000';
+        levelNumber.style.fontSize = '18px';
+        levelNumber.style.color = '#ffd700';
+        levelNumber.style.minWidth = '40px';
+        levelNumber.style.textAlign = 'center';
+        levelNumber.style.padding = '5px';
+        levelNumber.style.backgroundColor = 'rgba(0,0,0,0.3)';
+        levelNumber.style.borderRadius = '4px';
+        levelRow.appendChild(levelNumber);
         
-        // Style for current level vs other levels
-        const isCurrentLevel = i === gameInstance.currentLevel;
+        // Level details container
+        const levelDetails = document.createElement('div');
+        levelDetails.style.display = 'flex';
+        levelDetails.style.flexDirection = 'column';
+        levelDetails.style.flex = '1';
+        levelDetails.style.marginLeft = '10px';
         
-        // Create a wooden button appearance (smaller)
-        levelNumber.style.backgroundColor = isCurrentLevel ? '#8B4513' : '#654321';
-        levelNumber.style.backgroundImage = 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.1) 100%)';
-        levelNumber.style.border = isCurrentLevel ? '2px solid #ffd700' : '2px solid #8B4513';
-        levelNumber.style.borderRadius = '6px';
-        levelNumber.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
-        levelNumber.style.cursor = 'pointer';
-        levelNumber.style.transition = 'all 0.15s ease-in-out';
+        // Level name
+        const levelName = document.createElement('div');
+        levelName.textContent = `Level ${i + 1}`;
+        levelName.style.color = '#faf0dc';
+        levelName.style.fontWeight = 'bold';
+        levelName.style.fontSize = '16px';
+        levelDetails.appendChild(levelName);
         
-        buttonContainer.appendChild(levelNumber);
+        // Get personal best stats for this level
+        const levelKey = `level_${i}`;
+        const levelStats = gameInstance.levelStats && gameInstance.levelStats[levelKey];
         
-        // Hover effects
-        buttonContainer.onmouseover = () => {
-            levelNumber.style.transform = 'translateY(-2px)';
-            levelNumber.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
-            levelNumber.style.backgroundColor = isCurrentLevel ? '#9B5523' : '#755431';
-        };
+        // Best results container
+        const bestResults = document.createElement('div');
+        bestResults.style.color = '#ccc';
+        bestResults.style.fontSize = '14px';
+        bestResults.style.marginTop = '3px';
         
-        buttonContainer.onmouseout = () => {
-            levelNumber.style.transform = 'translateY(0)';
-            levelNumber.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
-            levelNumber.style.backgroundColor = isCurrentLevel ? '#8B4513' : '#654321';
-        };
+        if (levelStats) {
+            // Format and display best results
+            const bestMovesText = levelStats.bestMoves !== undefined ? `${levelStats.bestMoves} moves` : '';
+            const bestPushesText = levelStats.bestPushes !== undefined ? `${levelStats.bestPushes} pushes` : '';
+            const bestTimeText = levelStats.bestTime !== undefined ? formatTime(levelStats.bestTime) : '';
+            
+            const resultParts = [];
+            if (bestMovesText) resultParts.push(bestMovesText);
+            if (bestPushesText) resultParts.push(bestPushesText);
+            if (bestTimeText) resultParts.push(bestTimeText);
+            
+            if (resultParts.length > 0) {
+                bestResults.textContent = `Best: ${resultParts.join(' • ')}`;
+                bestResults.style.color = '#9acd32'; // Light green color for completed levels
+            } else {
+                bestResults.textContent = 'Not completed yet';
+            }
+        } else {
+            bestResults.textContent = 'Not completed yet';
+        }
         
-        // Active state
-        buttonContainer.onmousedown = () => {
-            levelNumber.style.transform = 'translateY(1px)';
-            levelNumber.style.boxShadow = '0 1px 2px rgba(0,0,0,0.5)';
-        };
-        
-        buttonContainer.onmouseup = () => {
-            levelNumber.style.transform = 'translateY(-2px)';
-            levelNumber.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
-        };
+        levelDetails.appendChild(bestResults);
+        levelRow.appendChild(levelDetails);
         
         // Click handler to load level
-        buttonContainer.onclick = () => {
+        levelRow.onclick = () => {
+            // Prevent further click events while processing this one
+            modal.style.pointerEvents = 'none';
+            
+            // First set the current level index
             gameInstance.setCurrentLevel(i);
-            gameInstance.changeLevel(i);
-            document.body.removeChild(modal);
+            
+            try {
+                // Remove dialog first to avoid any potential race conditions
+                document.body.removeChild(modal);
+                
+                // Then explicitly set the game state to PLAY first
+                gameInstance.setState(GAME_STATES.PLAY);
+                
+                // Finally change the level which will initialize game elements
+                gameInstance.changeLevel(i);
+            } catch (error) {
+                console.error("Error in level selection:", error);
+                // Restore pointer events if there was an error
+                modal.style.pointerEvents = 'auto';
+            }
         };
         
-        levelsGrid.appendChild(buttonContainer);
+        levelsList.appendChild(levelRow);
     }
     
-    levelsContainer.appendChild(levelsGrid);
+    levelsContainer.appendChild(levelsList);
     dialog.appendChild(levelsContainer);
+
+    // Create back button
+    const backButton = document.createElement('button');
+    backButton.textContent = gameInstance.resources.i18n.get('buttons.back') || 'Back';
+    backButton.style.display = 'block';
+    backButton.style.margin = '20px auto 0 auto';
+    backButton.style.padding = '10px 30px'; // Increased horizontal padding
+    backButton.style.fontSize = '16px';
+    backButton.style.backgroundColor = '#654321';
+    backButton.style.color = '#faf0dc';
+    backButton.style.border = '2px solid #8B4513';
+    backButton.style.borderRadius = '6px';
+    backButton.style.cursor = 'pointer';
+    backButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+    backButton.style.transition = 'all 0.2s';
+    backButton.style.width = 'auto'; // Let width adjust to content
+    backButton.style.minWidth = '120px'; // Slightly increased minimum width
+    backButton.style.maxWidth = '250px'; // Increased maximum width for longer text
+
+    // Add hover effects
+    backButton.onmouseover = () => {
+        backButton.style.backgroundColor = '#7B5731';
+        backButton.style.transform = 'translateY(-2px)';
+        backButton.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
+    };
+    
+    backButton.onmouseout = () => {
+        backButton.style.backgroundColor = '#654321';
+        backButton.style.transform = 'translateY(0)';
+        backButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+    };
+    
+    // Click handler to go back to game mode selection
+    backButton.onclick = () => {
+        if (document.body.contains(modal)) {
+            document.body.removeChild(modal);
+        }
+        gameInstance.setState(GAME_STATES.GAME_MODE_SELECT);
+    };
+    
+    dialog.appendChild(backButton);
     modal.appendChild(dialog);
     document.body.appendChild(modal);
-    
-    // Add keyboard event to close on Escape
-    const handleEscKey = (event) => {
-        if (event.key === 'Escape') {
-            document.body.removeChild(modal);
-            document.removeEventListener('keydown', handleEscKey);
+
+    // Add keyboard handler for escape key to close dialog
+    document.addEventListener('keydown', function escHandler(e) {
+        if (e.key === 'Escape') {
+            if (document.body.contains(modal)) {
+                document.body.removeChild(modal);
+            }
+            gameInstance.setState(GAME_STATES.GAME_MODE_SELECT);
+            document.removeEventListener('keydown', escHandler);
         }
-    };
-    document.addEventListener('keydown', handleEscKey);
+    });
 }
 
 function toggleDebugMode() {
@@ -1440,9 +1535,6 @@ function showSettingsDialog(gameInstance) {
     );
     settingsContainer.appendChild(musicGroup);
     
-    // Initialize music button states
-    updateMusicButtonsState();
-    
     dialog.appendChild(settingsContainer);
     modal.appendChild(dialog);
     
@@ -1465,4 +1557,48 @@ function showSettingsDialog(gameInstance) {
         }
     };
     document.addEventListener('keydown', handleEscKey);
+}
+
+/**
+ * Handle click on the game mode selection screen
+ * @param {MouseEvent} e - Mouse click event
+ */
+function handleGameModeSelectionClick(e, gameInstance) {
+    if (gameInstance.state !== GAME_STATES.GAME_MODE_SELECT) return;
+    
+    const rect = gameInstance.canvas.getBoundingClientRect();
+    const scaleX = gameInstance.canvas.width / rect.width;
+    const scaleY = gameInstance.canvas.height / rect.height;
+    
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+    
+    // Check if any button was clicked
+    Object.entries(gameInstance.buttonAreas).forEach(([key, area]) => {
+        if (clickX >= area.x && clickX <= area.x + area.width &&
+            clickY >= area.y && clickY <= area.y + area.height) {
+            
+            // Handle button click based on the button key
+            switch (key) {
+                case 'normalMode':
+                    gameInstance.gameMode = GAME_MODES.NORMAL;
+                    gameInstance.setState(GAME_STATES.LEVEL_SELECT);
+                    break;
+                    
+                case 'timeAttack':
+                    gameInstance.gameMode = GAME_MODES.TIME_ATTACK;
+                    gameInstance.setState(GAME_STATES.LEVEL_SELECT);
+                    break;
+                    
+                case 'challengeMode':
+                    gameInstance.gameMode = GAME_MODES.CHALLENGE;
+                    gameInstance.setState(GAME_STATES.LEVEL_SELECT);
+                    break;
+                    
+                case 'back':
+                    gameInstance.setState(GAME_STATES.INTRO);
+                    break;
+            }
+        }
+    });
 }

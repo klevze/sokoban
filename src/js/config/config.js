@@ -40,18 +40,29 @@ export const GAME_STATES = {
   INTRO: 'intro',
   PLAY: 'play',
   WIN: 'win',
-  PAUSED: 'paused',  // New state for game pausing
-  LEVEL_SELECT: 'level_select', // New state for level selection
+  PAUSED: 'paused',  // State for game pausing
+  LEVEL_SELECT: 'level_select', // State for level selection
+  EDITOR: 'editor',  // New state for the level editor
+  GAME_MODE_SELECT: 'game_mode_select', // New state for game mode selection
+};
+
+// Game Mode Constants
+export const GAME_MODES = {
+  NORMAL: 'normal',       // Standard gameplay with no constraints
+  TIME_ATTACK: 'time_attack', // Time-based race mode
+  CHALLENGE: 'challenge',  // Limited moves/time challenge mode
 };
 
 // State transition map - defines allowed transitions between states
 export const STATE_TRANSITIONS = {
   [GAME_STATES.LOADING]: [GAME_STATES.INTRO],
-  [GAME_STATES.INTRO]: [GAME_STATES.PLAY, GAME_STATES.LEVEL_SELECT],
+  [GAME_STATES.INTRO]: [GAME_STATES.PLAY, GAME_STATES.LEVEL_SELECT, GAME_STATES.EDITOR, GAME_STATES.GAME_MODE_SELECT],
   [GAME_STATES.PLAY]: [GAME_STATES.WIN, GAME_STATES.PAUSED, GAME_STATES.INTRO],
   [GAME_STATES.WIN]: [GAME_STATES.PLAY, GAME_STATES.INTRO],
   [GAME_STATES.PAUSED]: [GAME_STATES.PLAY, GAME_STATES.INTRO],
-  [GAME_STATES.LEVEL_SELECT]: [GAME_STATES.PLAY, GAME_STATES.INTRO]
+  [GAME_STATES.LEVEL_SELECT]: [GAME_STATES.PLAY, GAME_STATES.INTRO, GAME_STATES.GAME_MODE_SELECT],
+  [GAME_STATES.EDITOR]: [GAME_STATES.INTRO, GAME_STATES.PLAY],
+  [GAME_STATES.GAME_MODE_SELECT]: [GAME_STATES.INTRO, GAME_STATES.PLAY, GAME_STATES.LEVEL_SELECT]
 };
 
 // Player Settings

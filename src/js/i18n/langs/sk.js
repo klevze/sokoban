@@ -17,6 +17,7 @@ export default {
     moves: "Ťahy",
     pushes: "Posunutia",
     time: "Čas",
+    timeGoal: "Cieľ",
     restart: "Reštartovať úroveň",
     undo: "Krok späť",
     completed: "Úroveň dokončená!",
@@ -26,6 +27,15 @@ export default {
     confirmExit: "Vrátiť sa do hlavného menu?",
     confirmRestart: "Naozaj chcete reštartovať túto úroveň?",
     loading: "Načítavanie..."
+  },
+  gameModes: {
+    select: "Vyberte Herný Režim",
+    normal: "NORMÁLNY REŽIM",
+    timeAttack: "ČASOVÝ ÚTOK",
+    challenge: "REŽIM VÝZVY",
+    normalDescription: "Štandardná hra bez časových obmedzení",
+    timeAttackDescription: "Pretekajte s časom o najlepší výsledok",
+    challengeDescription: "Obmedzené ťahy a čas - zvládnete to?"
   },
   settings: {
     language: "Jazyk",
@@ -45,7 +55,8 @@ export default {
     veryFastSpeed: "Veľmi rýchla",
     musicOn: "Hudba zapnutá",
     musicOff: "Hudba vypnutá",
-    navigation: "Navigácia"
+    navigation: "Navigácia",
+    openSettings: "Otvoriť nastavenia"
   },
   speeds: {
     slow: "Pomalá",
@@ -64,12 +75,35 @@ export default {
   buttons: {
     play: "Hrať",
     home: "Domov",
-    levelSelect: "Výber úrovne",
+    levelSelect: "Vybrať úroveň",
     restart: "Reštart",
     toggleMusic: "Prepnúť hudbu",
     pause: "Pozastaviť hru",
     close: "Zavrieť",
     settings: "Nastavenia",
-    undo: "Späť"
+    undo: "Späť",
+    levelEditor: "Editor úrovní",
+    back: "Späť"
+  },
+  levelSelect: {
+    title: "Vybrať úroveň"
+  },
+  auth: {
+    signIn: "Prihlásiť sa",
+    signOut: "Odhlásiť sa",
+    register: "Registrovať sa",
+    account: "Účet",
+    name: "Meno",
+    email: "E-mail",
+    password: "Heslo",
+    confirmPassword: "Potvrdiť heslo",
+    signingIn: "Prihlasovanie...",
+    registering: "Registrácia...",
+    fillAllFields: "Prosím vyplňte všetky polia",
+    passwordsDoNotMatch: "Heslá sa nezhodujú",
+    passwordTooShort: "Heslo musí mať aspoň 6 znakov",
+    loginFailed: "Prihlásenie zlyhalo. Skontrolujte svoje údaje.",
+    registrationFailed: "Registrácia zlyhala. Skúste to znova.",
+    progressLoaded: "Pokrok načítaný z cloudu"
   }
 };

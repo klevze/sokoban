@@ -17,6 +17,7 @@ export default {
     moves: "Movimientos",
     pushes: "Empujones",
     time: "Tiempo",
+    timeGoal: "Objetivo",
     restart: "Reiniciar Nivel",
     undo: "Deshacer Movimiento",
     completed: "¡Nivel Completado!",
@@ -26,6 +27,15 @@ export default {
     confirmExit: "¿Volver al menú principal?",
     confirmRestart: "¿Estás seguro de que quieres reiniciar este nivel?",
     loading: "Cargando..."
+  },
+  gameModes: {
+    select: "Seleccionar Modo de Juego",
+    normal: "MODO NORMAL",
+    timeAttack: "CONTRARRELOJ",
+    challenge: "MODO DESAFÍO",
+    normalDescription: "Juego estándar sin límites de tiempo",
+    timeAttackDescription: "Compite contra el reloj para obtener el mejor tiempo",
+    challengeDescription: "Movimientos y tiempo limitados - ¿podrás superarlo?"
   },
   settings: {
     language: "Idioma",
@@ -71,6 +81,43 @@ export default {
     pause: "Pausar juego",
     close: "Cerrar",
     settings: "Ajustes",
-    undo: "Deshacer"
+    undo: "Deshacer",
+    levelEditor: "Editor de niveles",
+    back: "Atrás"
+  },
+  levelSelect: {
+    title: "Seleccionar Nivel"
+  },
+  auth: {
+    signIn: "Iniciar Sesión",
+    signOut: "Cerrar Sesión",
+    register: "Registrarse",
+    account: "Cuenta",
+    name: "Nombre",
+    email: "Correo Electrónico",
+    password: "Contraseña",
+    confirmPassword: "Confirmar Contraseña",
+    signingIn: "Iniciando sesión...",
+    registering: "Registrando...",
+    fillAllFields: "Por favor complete todos los campos",
+    passwordsDoNotMatch: "Las contraseñas no coinciden",
+    passwordTooShort: "La contraseña debe tener al menos 6 caracteres",
+    loginFailed: "Inicio de sesión fallido. Por favor verifique sus credenciales.",
+    registrationFailed: "Registro fallido. Por favor inténtelo de nuevo.",
+    progressLoaded: "Progreso cargado desde la nube"
+  },
+  testing: {
+    running: "Ejecutando pruebas...",
+    passed: "Prueba superada",
+    failed: "Prueba fallida",
+    levelCompletionTitle: "Prueba de Finalización de Nivel",
+    movementTitle: "Prueba de Movimiento del Jugador",
+    boxPushTitle: "Prueba de Empuje de Cajas",
+    undoTitle: "Prueba de Funcionalidad de Deshacer",
+    goalDetectionTitle: "Prueba de Detección de Metas",
+    resultsTitle: "Resultados de las Pruebas",
+    startTesting: "Iniciar Pruebas",
+    stopTesting: "Detener Pruebas",
+    testCompleted: "Todas las pruebas completadas"
   }
 };

@@ -12,7 +12,9 @@ import { Goal } from './goal.js';
 import { Score } from './score.js';
 import { Resources } from './resources.js';
 import { initEvents, hideLoadingText } from './events.js';
-import { GAME_STATES, PHYSICS, TILES, CANVAS, STATE_TRANSITIONS, VERSION, COPYRIGHT_YEAR, ASSET_PATHS } from './config/config.js';
+import { LevelEditor } from './editor.js';
+import { GAME_STATES, PHYSICS, TILES, CANVAS, STATE_TRANSITIONS, VERSION, COPYRIGHT_YEAR, ASSET_PATHS, GAME_MODES } from './config/config.js';
+import userManager from './auth/userManager.js';
 
 /**
  * Game class - Main controller for the Sokoban game
@@ -43,11 +45,13 @@ class Game {
         this.level = null;
         this.goal = null;
         this.score = null;
+        this.editor = null;
         
         // Level management
         this.levelsData = null;
         this.levelData = null;
         this.currentLevel = 0;
+        this.isCustomLevel = false;
         
         // Input handling
         this.lastKeyPressTime = 0;
@@ -55,6 +59,20 @@ class Game {
         
         // Game state
         this.state = GAME_STATES.LOADING;
+        
+        // Game mode settings
+        this.gameMode = GAME_MODES.NORMAL;
+        this.gameModeSettings = {
+            timeAttack: {
+                bestTimes: {} // Store best times for each level
+            },
+            challenge: {
+                movesLimit: 0,     // Maximum moves allowed (set per level)
+                timeLimit: 0,      // Time limit in milliseconds (set per level)
+                defaultMovesMultiplier: 2.0,  // Default moves limit = optimal solution * multiplier
+                defaultTimeLimit: 120000,     // Default time limit: 2 minutes
+            }
+        };
         
         // Game settings
         this.settings = {
@@ -74,6 +92,10 @@ class Game {
         
         // Language selector - create it after loading completes
         this.languageSelector = null;
+
+        // Authentication state
+        this.isUserAuthenticated = false;
+        this.userProfile = null;
         
         // Set document title using i18n
         document.title = this.resources.i18n.get('title');
@@ -82,6 +104,491 @@ class Game {
         this.resources.i18n.onLanguageChange = () => {
             this.updateAllTexts();
         };
+    }
+
+    /**
+     * Handle authentication state changes
+     * @param {boolean} isAuthenticated - Whether user is authenticated
+     * @param {Object} userProfile - User profile data if authenticated
+     */
+    onAuthStateChanged(isAuthenticated, userProfile) {
+        this.isUserAuthenticated = isAuthenticated;
+        this.userProfile = userProfile;
+        
+        // Update UI to reflect auth state
+        this._updateAuthUI();
+        
+        // If user just logged in, try to load their progress
+        if (isAuthenticated && userProfile) {
+            console.log(`User logged in: ${userProfile.displayName}`);
+            
+            // Start automatic progress syncing
+            userManager.startAutoSync();
+        } else {
+            console.log('User logged out');
+            userManager.stopAutoSync();
+        }
+    }
+
+    /**
+     * Update UI elements based on authentication state
+     * @private
+     */
+    _updateAuthUI() {
+        // This will be called when auth state changes to update UI elements
+        const authButton = document.getElementById('auth-button');
+        const userProfileDisplay = document.getElementById('user-profile');
+        
+        if (authButton && userProfileDisplay) {
+            if (this.isUserAuthenticated && this.userProfile) {
+                // User is logged in
+                authButton.textContent = this.resources.i18n.get('auth.signOut');
+                userProfileDisplay.textContent = this.userProfile.displayName;
+                userProfileDisplay.style.display = 'block';
+            } else {
+                // User is not logged in
+                authButton.textContent = this.resources.i18n.get('auth.signIn');
+                userProfileDisplay.style.display = 'none';
+            }
+        }
+    }
+
+    /**
+     * Process progress data loaded from cloud
+     * @param {Object} progress - User progress data
+     */
+    onProgressLoaded(progress) {
+        console.log('User progress loaded from cloud', progress);
+        
+        // Update Time Attack best times if available
+        if (progress.timeAttackBestTimes) {
+            this.gameModeSettings.timeAttack.bestTimes = {
+                ...this.gameModeSettings.timeAttack.bestTimes,
+                ...progress.timeAttackBestTimes
+            };
+        }
+        
+        // Store level statistics for later use
+        if (progress.levelStats) {
+            this.levelStats = progress.levelStats;
+            
+            // If we're currently in a level, update the score display with personal best
+            if (this.score && this.state === GAME_STATES.PLAY && this.gameMode === GAME_MODES.NORMAL) {
+                this.updatePersonalBest();
+            }
+        }
+        
+        // Show notification to user
+        this._showNotification(this.resources.i18n.get('auth.progressLoaded'));
+    }
+
+    /**
+     * Update personal best stats display in score panel
+     * Called when starting a level or when progress is loaded
+     */
+    updatePersonalBest() {
+        if (!this.score || !this.levelStats || this.gameMode !== GAME_MODES.NORMAL) {
+            return;
+        }
+        
+        const levelKey = `level_${this.currentLevel}`;
+        const levelStats = this.levelStats[levelKey];
+        
+        if (levelStats) {
+            // Set personal best data in score display
+            this.score.setPersonalBest(levelStats);
+            
+            // Show notification about personal best
+            this._showNotification(`Personal best loaded: ${levelStats.bestMoves} moves, ${this.score.formatTime(levelStats.bestTime)}`);
+        }
+    }
+
+    /**
+     * Show a temporary notification message to the user
+     * @param {string} message - Message to display
+     * @param {number} [duration=3000] - Duration in milliseconds
+     * @private
+     */
+    _showNotification(message, duration = 3000) {
+        // Create notification element if it doesn't exist
+        let notification = document.getElementById('game-notification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'game-notification';
+            notification.style.position = 'absolute';
+            notification.style.top = '10px';
+            notification.style.left = '50%';
+            notification.style.transform = 'translateX(-50%)';
+            notification.style.padding = '10px 20px';
+            notification.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+            notification.style.color = 'white';
+            notification.style.borderRadius = '5px';
+            notification.style.fontFamily = 'Arial, sans-serif';
+            notification.style.fontSize = '14px';
+            notification.style.zIndex = '1000';
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.3s ease';
+            document.body.appendChild(notification);
+        }
+        
+        // Set message and show notification
+        notification.textContent = message;
+        notification.style.opacity = '1';
+        
+        // Hide notification after duration
+        setTimeout(() => {
+            notification.style.opacity = '0';
+        }, duration);
+    }
+
+    /**
+     * Show the account dialog for login/registration
+     */
+    showAccountDialog() {
+        // Create dialog overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'dialog-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.zIndex = '1000';
+        
+        // Create dialog container
+        const dialog = document.createElement('div');
+        dialog.className = 'account-dialog';
+        dialog.style.backgroundColor = '#f0e6d2';
+        dialog.style.borderRadius = '8px';
+        dialog.style.padding = '20px';
+        dialog.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
+        dialog.style.maxWidth = '400px';
+        dialog.style.width = '90%';
+        
+        // Create dialog header
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.marginBottom = '20px';
+        
+        const title = document.createElement('h2');
+        title.textContent = this.isUserAuthenticated ? 
+            this.resources.i18n.get('auth.account') : 
+            this.resources.i18n.get('auth.signIn');
+        title.style.margin = '0';
+        title.style.color = '#5c4425';
+        
+        const closeButton = document.createElement('button');
+        closeButton.innerHTML = '&times;';
+        closeButton.style.backgroundColor = 'transparent';
+        closeButton.style.border = 'none';
+        closeButton.style.fontSize = '20px';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.color = '#5c4425';
+        closeButton.onclick = () => document.body.removeChild(overlay);
+        
+        header.appendChild(title);
+        header.appendChild(closeButton);
+        dialog.appendChild(header);
+        
+        if (this.isUserAuthenticated) {
+            // User is logged in, show account info and sign out button
+            const profileInfo = document.createElement('div');
+            profileInfo.style.marginBottom = '20px';
+            
+            const nameDisplay = document.createElement('p');
+            nameDisplay.innerHTML = `<strong>${this.resources.i18n.get('auth.name')}:</strong> ${this.userProfile.displayName}`;
+            
+            const emailDisplay = document.createElement('p');
+            emailDisplay.innerHTML = `<strong>${this.resources.i18n.get('auth.email')}:</strong> ${this.userProfile.email}`;
+            
+            profileInfo.appendChild(nameDisplay);
+            profileInfo.appendChild(emailDisplay);
+            dialog.appendChild(profileInfo);
+            
+            // Add sign out button
+            const signOutButton = document.createElement('button');
+            signOutButton.textContent = this.resources.i18n.get('auth.signOut');
+            signOutButton.className = 'auth-button';
+            signOutButton.style.padding = '10px 20px';
+            signOutButton.style.backgroundColor = '#8b673c';
+            signOutButton.style.color = 'white';
+            signOutButton.style.border = 'none';
+            signOutButton.style.borderRadius = '4px';
+            signOutButton.style.cursor = 'pointer';
+            signOutButton.style.fontSize = '16px';
+            signOutButton.style.width = '100%';
+            
+            signOutButton.onclick = async () => {
+                try {
+                    await userManager.signOut();
+                    document.body.removeChild(overlay);
+                } catch (error) {
+                    console.error('Error signing out:', error);
+                    // Show error message
+                    this._showAuthError(dialog, error.message);
+                }
+            };
+            
+            dialog.appendChild(signOutButton);
+        } else {
+            // User is not logged in, show login/register form
+            
+            // Create tabs for login and register
+            const tabs = document.createElement('div');
+            tabs.style.display = 'flex';
+            tabs.style.marginBottom = '15px';
+            
+            const loginTab = document.createElement('div');
+            loginTab.textContent = this.resources.i18n.get('auth.signIn');
+            loginTab.style.padding = '10px';
+            loginTab.style.cursor = 'pointer';
+            loginTab.style.flex = '1';
+            loginTab.style.textAlign = 'center';
+            loginTab.style.borderBottom = '2px solid #8b673c';
+            loginTab.dataset.tab = 'login';
+            
+            const registerTab = document.createElement('div');
+            registerTab.textContent = this.resources.i18n.get('auth.register');
+            registerTab.style.padding = '10px';
+            registerTab.style.cursor = 'pointer';
+            registerTab.style.flex = '1';
+            registerTab.style.textAlign = 'center';
+            registerTab.style.borderBottom = '2px solid #ccc';
+            registerTab.dataset.tab = 'register';
+            
+            tabs.appendChild(loginTab);
+            tabs.appendChild(registerTab);
+            dialog.appendChild(tabs);
+            
+            // Create forms container
+            const formsContainer = document.createElement('div');
+            
+            // Login form
+            const loginForm = document.createElement('form');
+            loginForm.id = 'login-form';
+            loginForm.style.display = 'block';
+            
+            const loginEmail = this._createFormField('email', 'auth.email', 'email');
+            const loginPassword = this._createFormField('password', 'auth.password', 'password');
+            
+            const loginSubmit = document.createElement('button');
+            loginSubmit.type = 'submit';
+            loginSubmit.textContent = this.resources.i18n.get('auth.signIn');
+            loginSubmit.style.padding = '10px 20px';
+            loginSubmit.style.backgroundColor = '#8b673c';
+            loginSubmit.style.color = 'white';
+            loginSubmit.style.border = 'none';
+            loginSubmit.style.borderRadius = '4px';
+            loginSubmit.style.cursor = 'pointer';
+            loginSubmit.style.fontSize = '16px';
+            loginSubmit.style.width = '100%';
+            loginSubmit.style.marginTop = '10px';
+            
+            loginForm.appendChild(loginEmail);
+            loginForm.appendChild(loginPassword);
+            loginForm.appendChild(loginSubmit);
+            
+            // Register form
+            const registerForm = document.createElement('form');
+            registerForm.id = 'register-form';
+            registerForm.style.display = 'none';
+            
+            const registerName = this._createFormField('text', 'auth.name', 'displayName');
+            const registerEmail = this._createFormField('email', 'auth.email', 'email');
+            const registerPassword = this._createFormField('password', 'auth.password', 'password');
+            const registerConfirmPassword = this._createFormField('password', 'auth.confirmPassword', 'confirmPassword');
+            
+            const registerSubmit = document.createElement('button');
+            registerSubmit.type = 'submit';
+            registerSubmit.textContent = this.resources.i18n.get('auth.register');
+            registerSubmit.style.padding = '10px 20px';
+            registerSubmit.style.backgroundColor = '#8b673c';
+            registerSubmit.style.color = 'white';
+            registerSubmit.style.border = 'none';
+            registerSubmit.style.borderRadius = '4px';
+            registerSubmit.style.cursor = 'pointer';
+            registerSubmit.style.fontSize = '16px';
+            registerSubmit.style.width = '100%';
+            registerSubmit.style.marginTop = '10px';
+            
+            registerForm.appendChild(registerName);
+            registerForm.appendChild(registerEmail);
+            registerForm.appendChild(registerPassword);
+            registerForm.appendChild(registerConfirmPassword);
+            registerForm.appendChild(registerSubmit);
+            
+            formsContainer.appendChild(loginForm);
+            formsContainer.appendChild(registerForm);
+            dialog.appendChild(formsContainer);
+            
+            // Create error message display
+            const errorDisplay = document.createElement('div');
+            errorDisplay.id = 'auth-error';
+            errorDisplay.style.color = '#d32f2f';
+            errorDisplay.style.marginTop = '10px';
+            errorDisplay.style.fontSize = '14px';
+            errorDisplay.style.display = 'none';
+            dialog.appendChild(errorDisplay);
+            
+            // Add event listeners for forms
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = loginForm.email.value.trim();
+                const password = loginForm.password.value;
+                
+                if (!email || !password) {
+                    this._showAuthError(dialog, this.resources.i18n.get('auth.fillAllFields'));
+                    return;
+                }
+                
+                try {
+                    loginSubmit.disabled = true;
+                    loginSubmit.textContent = this.resources.i18n.get('auth.signingIn');
+                    
+                    await userManager.signIn(email, password);
+                    document.body.removeChild(overlay);
+                } catch (error) {
+                    console.error('Login error:', error);
+                    // Show the actual error message instead of a generic one
+                    this._showAuthError(dialog, error.message || this.resources.i18n.get('auth.loginFailed'));
+                    
+                    loginSubmit.disabled = false;
+                    loginSubmit.textContent = this.resources.i18n.get('auth.signIn');
+                }
+            });
+            
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const displayName = registerForm.displayName.value.trim();
+                const email = registerForm.email.value.trim();
+                const password = registerForm.password.value;
+                const confirmPassword = registerForm.confirmPassword.value;
+                
+                if (!displayName || !email || !password || !confirmPassword) {
+                    this._showAuthError(dialog, this.resources.i18n.get('auth.fillAllFields'));
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    this._showAuthError(dialog, this.resources.i18n.get('auth.passwordsDoNotMatch'));
+                    return;
+                }
+                
+                // Simple password validation
+                if (password.length < 6) {
+                    this._showAuthError(dialog, this.resources.i18n.get('auth.passwordTooShort'));
+                    return;
+                }
+                
+                try {
+                    registerSubmit.disabled = true;
+                    registerSubmit.textContent = this.resources.i18n.get('auth.registering');
+                    
+                    await userManager.register(email, password, displayName);
+                    document.body.removeChild(overlay);
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    this._showAuthError(dialog, this.resources.i18n.get('auth.registrationFailed'));
+                    
+                    registerSubmit.disabled = false;
+                    registerSubmit.textContent = this.resources.i18n.get('auth.register');
+                }
+            });
+            
+            // Add event listeners for tabs
+            loginTab.addEventListener('click', () => {
+                loginTab.style.borderBottom = '2px solid #8b673c';
+                registerTab.style.borderBottom = '2px solid #ccc';
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                errorDisplay.style.display = 'none';
+            });
+            
+            registerTab.addEventListener('click', () => {
+                registerTab.style.borderBottom = '2px solid #8b673c';
+                loginTab.style.borderBottom = '2px solid #ccc';
+                registerForm.style.display = 'block';
+                loginForm.style.display = 'none';
+                errorDisplay.style.display = 'none';
+            });
+        }
+        
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+    }
+
+    /**
+     * Create a form field for authentication forms
+     * @param {string} type - Input type
+     * @param {string} labelKey - i18n key for label
+     * @param {string} name - Input name
+     * @returns {HTMLDivElement} - Form field container
+     * @private
+     */
+    _createFormField(type, labelKey, name) {
+        const field = document.createElement('div');
+        field.style.marginBottom = '15px';
+        
+        const label = document.createElement('label');
+        label.textContent = this.resources.i18n.get(labelKey);
+        label.style.display = 'block';
+        label.style.marginBottom = '5px';
+        label.style.fontWeight = 'bold';
+        label.style.color = '#5c4425';
+        
+        const input = document.createElement('input');
+        input.type = type;
+        input.name = name;
+        input.style.width = '100%';
+        input.style.padding = '8px';
+        input.style.boxSizing = 'border-box';
+        input.style.border = '1px solid #ccc';
+        input.style.borderRadius = '4px';
+        
+        field.appendChild(label);
+        field.appendChild(input);
+        
+        return field;
+    }
+
+    /**
+     * Show an error message in the authentication dialog
+     * @param {HTMLElement} dialog - Dialog container
+     * @param {string} message - Error message
+     * @private
+     */
+    _showAuthError(dialog, message) {
+        const errorDisplay = dialog.querySelector('#auth-error');
+        if (errorDisplay) {
+            errorDisplay.textContent = message;
+            errorDisplay.style.display = 'block';
+        }
+    }
+
+    /**
+     * Toggle the account dialog
+     */
+    toggleAccountDialog() {
+        console.log("toggleAccountDialog called, current state:", this.state);
+        try {
+            // Allow the account dialog in most game states except for loading
+            if (this.state !== GAME_STATES.LOADING) {
+                console.log("Showing account dialog");
+                this.showAccountDialog();
+            } else {
+                console.log("Not showing account dialog because game is in LOADING state");
+            }
+        } catch (error) {
+            console.error("Error in toggleAccountDialog:", error);
+        }
     }
 
     /**
@@ -213,6 +720,9 @@ class Game {
                 
                 // Create language selector after loading completes
                 this.createLanguageSelector();
+
+                // Initialize user manager and listen for auth state changes
+                userManager.init(this.onAuthStateChanged.bind(this), this.onProgressLoaded.bind(this));
             })
             .catch(error => {
                 console.error('Error during game initialization:', error);
@@ -385,8 +895,24 @@ class Game {
             case GAME_STATES.INTRO:
                 this.showIntroScreen();
                 break;
+            case GAME_STATES.GAME_MODE_SELECT:
+                this.showGameModeScreen();
+                break;
+            case GAME_STATES.LEVEL_SELECT:
+                // When in level selection state, show the level selection dialog and automatically transition to PLAY state
+                this.showLevelSelectScreen();
+                break;
             case GAME_STATES.PLAY:
                 this.renderGameElements();
+                
+                // Check for challenge mode specific constraints
+                if (this.gameMode === GAME_MODES.CHALLENGE) {
+                    this.checkChallengeConstraints();
+                }
+                // Check Time Attack goal time constraints
+                else if (this.gameMode === GAME_MODES.TIME_ATTACK) {
+                    this.checkTimeAttackConstraints();
+                }
                 break;
             case GAME_STATES.WIN:
                 this.renderGameElements();
@@ -396,7 +922,92 @@ class Game {
                 this.renderGameElements();
                 this.showPauseScreen();
                 break;
+            case GAME_STATES.EDITOR:
+                // Show editor interface
+                this.editor?.draw();
+                break;
         }
+    }
+
+    /**
+     * Display level selection screen
+     * This screen allows selecting a level and automatically transitions to showing the dialog
+     */
+    showLevelSelectScreen() {
+        // Draw the background image
+        this.ctx.drawImage(
+            this.resources.images.levelBackground.image, 
+            0, 
+            0, 
+            this.canvas.width, 
+            this.canvas.height
+        );
+        
+        // Draw the wood panel in the center
+        const panelWidth = 400;
+        const panelHeight = 250;
+        const panelX = this.canvas.width / 2 - panelWidth / 2;
+        const panelY = this.canvas.height / 2 - panelHeight / 2;
+        
+        // Draw wooden background for the panel
+        this.ctx.save();
+        
+        // Create a clip region for the panel
+        this.ctx.beginPath();
+        this.ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
+        this.ctx.clip();
+        
+        // Draw the background image inside the clipped region
+        if (this.resources.images.levelBackground && this.resources.images.levelBackground.image) {
+            this.ctx.drawImage(
+                this.resources.images.levelBackground.image,
+                panelX, 
+                panelY, 
+                panelWidth, 
+                panelHeight
+            );
+            
+            // Add a dark overlay for better text contrast
+            this.ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+            this.ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
+        } else {
+            // Fallback if image is not available
+            this.ctx.fillStyle = "rgba(101, 67, 33, 0.9)";
+            this.ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
+        }
+        
+        this.ctx.restore();
+        
+        // Draw border
+        this.ctx.save();
+        this.ctx.strokeStyle = "#3a2214";
+        this.ctx.lineWidth = 8;
+        this.ctx.beginPath();
+        this.ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 15);
+        this.ctx.stroke();
+        this.ctx.restore();
+        
+        // Draw loading text
+        this.ctx.font = "24px Arial";
+        this.ctx.fillStyle = "#faf0dc";
+        this.ctx.textAlign = "center";
+        this.ctx.fillText(
+            this.resources.i18n.get('loading.loadingLevels'),
+            this.canvas.width / 2,
+            this.canvas.height / 2
+        );
+        
+        // Show the level selection dialog immediately
+        // We do this via setTimeout to allow the frame to render before showing the dialog
+        setTimeout(() => {
+            import('./events.js').then(events => {
+                // First check if we're still in the LEVEL_SELECT state
+                // If the user has already clicked or pressed a key to exit, don't show the dialog
+                if (this.state === GAME_STATES.LEVEL_SELECT) {
+                    events.showLevelSelectDialog(this);
+                }
+            });
+        }, 50);
     }
 
     /**
@@ -591,7 +1202,7 @@ class Game {
         // Draw the play button - positioned at 80% of canvas height instead of fixed Y
         const btnPlayImg = this.resources.images.btnPlay.image;
         const btnX = this.ctx.canvas.width / 2 - btnPlayImg.width / 2;
-        const btnY = this.canvas.height * 0.8; // Dynamic position at 80% of canvas height
+        const btnY = this.canvas.height * 0.7; // Dynamic position at 70% of canvas height
         this.ctx.drawImage(btnPlayImg, btnX, btnY);
         
         // Get "NEW GAME" text and convert to uppercase
@@ -620,6 +1231,36 @@ class Game {
         this.ctx.fillStyle = "white";
         this.ctx.fillText(newGameText, textX, btnCenterY);
         
+        // Draw the level editor button - positioned below the play button
+        const editorY = btnY + btnPlayImg.height + 20;
+        this.ctx.drawImage(btnPlayImg, btnX, editorY);
+        
+        // Get "LEVEL EDITOR" text and convert to uppercase
+        const editorText = this.resources.i18n.get('buttons.levelEditor').toUpperCase();
+        
+        // Adjust font size based on text length to prevent overflow
+        let editorFontSize = 30; // Default size
+        if (editorText.length > 10) {
+            editorFontSize = 24; // Smaller text for longer strings
+        }
+        if (editorText.length > 15) {
+            editorFontSize = 20; // Even smaller for very long translations
+        }
+        
+        // Set the font size for editor button text
+        this.ctx.font = `bold ${editorFontSize}px Arial`;
+        
+        // Position text centered in the button
+        const editorCenterY = editorY + btnPlayImg.height/2 + 10;
+        
+        // Text shadow for better visibility
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(editorText, textX + 2, editorCenterY + 2);
+        
+        // Main text color
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(editorText, textX, editorCenterY);
+        
         // Draw version info at the bottom right corner of the canvas
         this.ctx.font = "10px Arial";
         this.ctx.textAlign = "right";
@@ -632,6 +1273,133 @@ class Game {
         this.ctx.fillText(`© ${COPYRIGHT_YEAR} / Version: ${VERSION}`, versionX + 1, versionY + 1);
         this.ctx.fillStyle = "white";
         this.ctx.fillText(`© ${COPYRIGHT_YEAR} / Version: ${VERSION}`, versionX, versionY);
+
+        // Store button areas for click detection
+        this.buttonAreas = {
+            play: { x: btnX, y: btnY, width: btnPlayImg.width, height: btnPlayImg.height },
+            editor: { x: btnX, y: editorY, width: btnPlayImg.width, height: btnPlayImg.height }
+        };
+    }
+
+    /**
+     * Display game mode selection screen
+     */
+    showGameModeScreen() {
+        // Draw the background image
+        this.ctx.drawImage(
+            this.resources.images.levelBackground.image, 
+            0, 
+            0, 
+            this.canvas.width, 
+            this.canvas.height
+        );
+
+        // Draw logo at the top
+        const logoImg = this.resources.images.logo.image;
+        const logoWidth = logoImg.width * 0.7; // Scale down a bit
+        const logoHeight = logoImg.height * 0.7;
+        
+        const logoX = this.ctx.canvas.width / 2 - logoWidth / 2;
+        const logoY = 50;
+        this.ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+        
+        // Title text
+        this.ctx.font = "36px Arial";
+        this.ctx.fillStyle = "#fff";
+        this.ctx.textAlign = "center";
+        
+        // Draw title with shadow
+        const titleY = logoY + logoHeight + 40;
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(this.resources.i18n.get('gameModes.select'), this.canvas.width / 2 + 2, titleY + 2);
+        this.ctx.fillStyle = "#ffaa00";
+        this.ctx.fillText(this.resources.i18n.get('gameModes.select'), this.canvas.width / 2, titleY);
+        
+        // Draw buttons for different game modes
+        const btnPlayImg = this.resources.images.btnPlay.image;
+        const buttonWidth = btnPlayImg.width;
+        const buttonHeight = btnPlayImg.height;
+        
+        // Calculate positions for 3 buttons with equal spacing
+        const buttonsStartY = titleY + 60;
+        const buttonSpacing = 20;
+        
+        // Normal Mode Button
+        const normalModeX = this.canvas.width / 2 - buttonWidth / 2;
+        const normalModeY = buttonsStartY;
+        this.ctx.drawImage(btnPlayImg, normalModeX, normalModeY);
+        
+        // Time Attack Button
+        const timeAttackX = this.canvas.width / 2 - buttonWidth / 2;
+        const timeAttackY = normalModeY + buttonHeight + buttonSpacing;
+        this.ctx.drawImage(btnPlayImg, timeAttackX, timeAttackY);
+        
+        // Challenge Mode Button
+        const challengeModeX = this.canvas.width / 2 - buttonWidth / 2;
+        const challengeModeY = timeAttackY + buttonHeight + buttonSpacing;
+        this.ctx.drawImage(btnPlayImg, challengeModeX, challengeModeY);
+        
+        // Button labels
+        this.ctx.font = "bold 24px Arial";
+        this.ctx.textAlign = "center";
+        const centerX = this.canvas.width / 2;
+        
+        // Normal Mode label
+        const normalModeCenterY = normalModeY + buttonHeight / 2 + 8;
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(this.resources.i18n.get('gameModes.normal'), centerX + 2, normalModeCenterY + 2);
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(this.resources.i18n.get('gameModes.normal'), centerX, normalModeCenterY);
+        
+        // Time Attack label
+        const timeAttackCenterY = timeAttackY + buttonHeight / 2 + 8;
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(this.resources.i18n.get('gameModes.timeAttack'), centerX + 2, timeAttackCenterY + 2);
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(this.resources.i18n.get('gameModes.timeAttack'), centerX, timeAttackCenterY);
+        
+        // Challenge Mode label
+        const challengeModeCenterY = challengeModeY + buttonHeight / 2 + 8;
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(this.resources.i18n.get('gameModes.challenge'), centerX + 2, challengeModeCenterY + 2);
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(this.resources.i18n.get('gameModes.challenge'), centerX, challengeModeCenterY);
+        
+        // Back button (smaller, at bottom)
+        const backButtonScale = 0.8;
+        const backButtonWidth = buttonWidth * backButtonScale;
+        const backButtonHeight = buttonHeight * backButtonScale;
+        const backButtonX = 20;
+        const backButtonY = this.canvas.height - backButtonHeight - 20;
+        
+        // Draw scaled back button
+        this.ctx.save();
+        this.ctx.translate(backButtonX, backButtonY);
+        this.ctx.scale(backButtonScale, backButtonScale);
+        this.ctx.drawImage(btnPlayImg, 0, 0);
+        this.ctx.restore();
+        
+        // Back button label
+        this.ctx.font = "bold 18px Arial";
+        const backButtonCenterX = backButtonX + backButtonWidth / 2;
+        const backButtonCenterY = backButtonY + backButtonHeight / 2 + 6;
+        
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(this.resources.i18n.get('buttons.back'), backButtonCenterX + 2, backButtonCenterY + 2);
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(this.resources.i18n.get('buttons.back'), backButtonCenterX, backButtonCenterY);
+        
+        // Mode descriptions
+        this.ctx.font = "16px Arial";
+        this.ctx.textAlign = "center";
+        
+        // Store clickable areas for the buttons
+        this.buttonAreas = {
+            normalMode: { x: normalModeX, y: normalModeY, width: buttonWidth, height: buttonHeight },
+            timeAttack: { x: timeAttackX, y: timeAttackY, width: buttonWidth, height: buttonHeight },
+            challengeMode: { x: challengeModeX, y: challengeModeY, width: buttonWidth, height: buttonHeight },
+            back: { x: backButtonX, y: backButtonY, width: backButtonWidth, height: backButtonHeight }
+        };
     }
 
     /**
@@ -930,6 +1698,54 @@ class Game {
     }
 
     /**
+     * Open the level editor
+     */
+    openLevelEditor() {
+        if (!this.editor) {
+            // Initialize the level editor if it doesn't exist
+            this.editor = new LevelEditor(
+                this.ctx,
+                this.resources.images.tiles.image,
+                TILES.SOURCE_SIZE,
+                TILES.OUTPUT_SIZE
+            );
+        }
+        
+        // Switch to editor state
+        this.setState(GAME_STATES.EDITOR);
+        
+        // Show the editor UI
+        this.editor.show();
+    }
+    
+    /**
+     * Test a custom level from the level editor
+     * @param {Object} levelData - The level data to test
+     */
+    testCustomLevel(levelData) {
+        // Store the custom level
+        this.levelData = levelData;
+        this.isCustomLevel = true;
+        
+        // Set up the game with the custom level
+        this.setupGame();
+        this.state = GAME_STATES.PLAY;
+        
+        // Initialize the boxes score counter to show current boxes on goals
+        if (this.boxes) {
+            this.boxes.updateBoxesScore();
+        }
+    }
+    
+    /**
+     * Return to the game from the editor
+     */
+    returnFromEditor() {
+        // Return to the intro screen
+        this.setState(GAME_STATES.INTRO);
+    }
+
+    /**
      * Set current level
      * @param {number} levelIndex - Level index to set
      */
@@ -958,6 +1774,158 @@ class Game {
         if (this.boxes) {
             this.boxes.updateBoxesScore();
         }
+        
+        // Set up game mode specific settings
+        if (this.gameMode === GAME_MODES.TIME_ATTACK) {
+            // Set time goal based on best time or default time
+            this.setupTimeAttackMode(levelIndex);
+        } else if (this.gameMode === GAME_MODES.CHALLENGE) {
+            this.setupChallengeMode(levelIndex);
+        } else if (this.gameMode === GAME_MODES.NORMAL) {
+            // Load personal best statistics for normal mode
+            this.updatePersonalBest();
+        }
+    }
+    
+    /**
+     * Setup Time Attack mode for a specific level
+     * @param {number} levelIndex - Level index to set up time attack mode for
+     */
+    setupTimeAttackMode(levelIndex) {
+        const levelKey = `level_${levelIndex}`;
+        let bestTime = this.gameModeSettings.timeAttack.bestTimes[levelKey];
+        
+        // If there's no best time yet, set a default goal based on level complexity
+        if (!bestTime) {
+            // Calculate a default time goal based on the level complexity
+            const levelSize = this.levelData.width * this.levelData.height;
+            const boxCount = this.boxes ? this.boxes.boxes.length : 0;
+            
+            // Base time: 2 minutes + adjustments for level size and box count
+            const baseTime = 120000; // 2 minutes in ms
+            const sizeAdjustment = levelSize * 100; // 100ms per tile
+            const boxAdjustment = boxCount * 15000; // 15 seconds per box
+            
+            // Calculate time goal with minimum of 30 seconds
+            bestTime = Math.max(30000, baseTime + sizeAdjustment + boxAdjustment);
+            
+            // Store it temporarily
+            this.gameModeSettings.timeAttack.defaultTimes = this.gameModeSettings.timeAttack.defaultTimes || {};
+            this.gameModeSettings.timeAttack.defaultTimes[levelKey] = bestTime;
+        }
+        
+        // Set the time goal in the score display
+        if (this.score) {
+            this.score.setTimeGoal(bestTime);
+        }
+    }
+
+    /**
+     * Setup Challenge Mode constraints for a specific level
+     * @param {number} levelIndex - Level index to set up challenge mode for
+     */
+    setupChallengeMode(levelIndex) {
+        // Default number of moves allowed is the base solution length × multiplier
+        // For simplicity, we'll use a formula based on level size
+        const levelData = this.levelData;
+        const levelWidth = levelData.width;
+        const levelHeight = levelData.height;
+        const levelSize = levelWidth * levelHeight;
+        
+        // More complex levels get more moves
+        // Start with a base number of moves proportional to level size
+        const baseMoves = Math.floor(levelSize * 0.8);
+        const movesLimit = Math.max(30, baseMoves * this.gameModeSettings.challenge.defaultMovesMultiplier);
+        
+        // Set time limit based on level complexity
+        const timeLimit = this.gameModeSettings.challenge.defaultTimeLimit * 
+                         (levelSize / 100); // Larger levels get more time
+        
+        // Apply constraints
+        this.gameModeSettings.challenge.movesLimit = Math.floor(movesLimit);
+        this.gameModeSettings.challenge.timeLimit = Math.floor(timeLimit);
+        
+        // Show challenge mode UI with move/time limits
+        this.showChallengeModeUI();
+    }
+
+    /**
+     * Show Challenge Mode UI with move/time limits
+     */
+    showChallengeModeUI() {
+        // Create a UI panel to display the challenge constraints
+        const modal = document.createElement('div');
+        modal.id = 'challenge-mode-info';
+        modal.style.position = 'fixed';
+        modal.style.top = '50%';
+        modal.style.left = '50%';
+        modal.style.transform = 'translate(-50%, -50%)';
+        modal.style.backgroundColor = '#8B4513';
+        modal.style.borderRadius = '10px';
+        modal.style.padding = '20px';
+        modal.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+        modal.style.textAlign = 'center';
+        modal.style.maxWidth = '500px';
+        modal.style.width = '80%';
+        modal.style.border = '8px solid #3a2214';
+        modal.style.zIndex = '1000';
+        modal.style.color = 'white';
+        modal.style.fontFamily = 'Arial, sans-serif';
+        
+        // Create heading
+        const heading = document.createElement('h2');
+        heading.textContent = 'Challenge Mode';
+        heading.style.color = '#ffaa00';
+        heading.style.marginTop = '0';
+        
+        // Create challenge info
+        const movesLimit = document.createElement('p');
+        movesLimit.textContent = `Moves Limit: ${this.gameModeSettings.challenge.movesLimit}`;
+        movesLimit.style.fontSize = '18px';
+        movesLimit.style.marginBottom = '10px';
+        
+        const timeLimit = document.createElement('p');
+        const formattedTime = this.score.formatTime(this.gameModeSettings.challenge.timeLimit);
+        timeLimit.textContent = `Time Limit: ${formattedTime}`;
+        timeLimit.style.fontSize = '18px';
+        timeLimit.style.marginBottom = '20px';
+        
+        // Create start button
+        const startBtn = document.createElement('button');
+        startBtn.textContent = 'Start Challenge!';
+        startBtn.style.backgroundColor = '#654321';
+        startBtn.style.color = 'white';
+        startBtn.style.border = 'none';
+        startBtn.style.padding = '10px 20px';
+        startBtn.style.borderRadius = '5px';
+        startBtn.style.fontSize = '16px';
+        startBtn.style.cursor = 'pointer';
+        
+        // Add hover effect
+        startBtn.onmouseover = () => {
+            startBtn.style.backgroundColor = '#755431';
+        };
+        startBtn.onmouseout = () => {
+            startBtn.style.backgroundColor = '#654321';
+        };
+        
+        // Start the challenge when clicked
+        startBtn.onclick = () => {
+            document.body.removeChild(modal);
+            // Start the timer when challenge begins
+            if (this.score) {
+                this.score.resetTimer();
+                this.score.startTimer();
+            }
+        };
+        
+        // Append elements
+        modal.appendChild(heading);
+        modal.appendChild(movesLimit);
+        modal.appendChild(timeLimit);
+        modal.appendChild(startBtn);
+        
+        document.body.appendChild(modal);
     }
 
     /**
@@ -998,6 +1966,68 @@ class Game {
 
         // Win condition: all boxes are on goals
         if (matchedCount === this.goal.goals.length) {
+            // Save level statistics immediately before showing win screen
+            if (this.score) {
+                // Save level statistics for normal mode
+                if (this.gameMode === GAME_MODES.NORMAL) {
+                    if (!this.levelStats) {
+                        this.levelStats = {};
+                    }
+                    
+                    const levelKey = `level_${this.currentLevel}`;
+                    const currentStats = {
+                        moves: this.score.moves,
+                        pushes: this.score.pushes,
+                        time: this.score.elapsedTime
+                    };
+                    
+                    // Get existing stats or initialize new ones
+                    const existingStats = this.levelStats[levelKey] || {};
+                    
+                    // Update best stats
+                    this.levelStats[levelKey] = {
+                        bestMoves: existingStats.bestMoves ? Math.min(existingStats.bestMoves, currentStats.moves) : currentStats.moves,
+                        bestPushes: existingStats.bestPushes ? Math.min(existingStats.bestPushes, currentStats.pushes) : currentStats.pushes,
+                        bestTime: existingStats.bestTime ? Math.min(existingStats.bestTime, currentStats.time) : currentStats.time,
+                    };
+                }
+            }
+            
+            // Handle Time Attack mode best time tracking
+            if (this.gameMode === GAME_MODES.TIME_ATTACK && this.score) {
+                this.trackTimeAttackAchievement();
+            }
+            
+            // Always sync progress regardless of auth state
+            if (userManager) {
+                // Make sure level is added to completedLevels immediately
+                if (!userManager.progress) {
+                    userManager.progress = {
+                        currentLevel: this.currentLevel,
+                        completedLevels: [this.currentLevel],
+                        timeAttackBestTimes: {},
+                        levelStats: this.levelStats || {}
+                    };
+                } else if (userManager.progress.completedLevels && 
+                          !userManager.progress.completedLevels.includes(this.currentLevel)) {
+                    userManager.progress.completedLevels.push(this.currentLevel);
+                    
+                    // Make sure level stats are up to date
+                    if (this.levelStats && this.levelStats[`level_${this.currentLevel}`]) {
+                        if (!userManager.progress.levelStats) {
+                            userManager.progress.levelStats = {};
+                        }
+                        userManager.progress.levelStats[`level_${this.currentLevel}`] = 
+                            this.levelStats[`level_${this.currentLevel}`];
+                    }
+                }
+                
+                // Force sync to save our progress
+                userManager.syncProgress(true).catch(err => 
+                    console.warn('Failed to sync progress after level completion:', err)
+                );
+            }
+
             this.setState(GAME_STATES.WIN);
             this.resources.sound.victory.currentTime = 0;
             this.resources.sound.victory.play();
@@ -1005,6 +2035,435 @@ class Game {
         }
 
         return false;
+    }
+
+    /**
+     * Track and potentially save best time for Time Attack mode
+     */
+    trackTimeAttackAchievement() {
+        // Only process if we're in Time Attack mode and have a valid score
+        if (this.gameMode !== GAME_MODES.TIME_ATTACK || !this.score) {
+            return;
+        }
+        
+        const levelKey = `level_${this.currentLevel}`;
+        const currentTime = this.score.elapsedTime;
+        let bestTime = this.gameModeSettings.timeAttack.bestTimes[levelKey];
+        let isNewBestTime = false;
+        
+        // Check if this is a new best time
+        if (!bestTime || currentTime < bestTime) {
+            // Save the new best time
+            this.gameModeSettings.timeAttack.bestTimes[levelKey] = currentTime;
+            bestTime = currentTime;
+            isNewBestTime = true;
+            
+            // Try to save to localStorage
+            try {
+                const savedData = localStorage.getItem('sokoban_time_attack') || '{}';
+                const timeAttackData = JSON.parse(savedData);
+                timeAttackData[levelKey] = currentTime;
+                localStorage.setItem('sokoban_time_attack', JSON.stringify(timeAttackData));
+            } catch (e) {
+                console.warn('Failed to save best time to localStorage:', e);
+            }
+            
+            // If user is authenticated, sync progress to cloud
+            if (this.isUserAuthenticated) {
+                userManager.syncProgress(true).catch(err => 
+                    console.warn('Failed to sync progress after new best time:', err)
+                );
+            }
+        }
+        
+        // Show achievement message
+        this.showTimeAttackResult(currentTime, bestTime, isNewBestTime);
+    }
+
+    /**
+     * Show Time Attack mode results
+     * @param {number} currentTime - Current completion time in milliseconds
+     * @param {number} bestTime - Best time in milliseconds
+     * @param {boolean} isNewBestTime - Whether this is a new best time
+     */
+    showTimeAttackResult(currentTime, bestTime, isNewBestTime) {
+        // Create modal container for the results
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        modal.style.zIndex = '1000';
+        modal.style.display = 'flex';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        modal.style.opacity = '0';
+        modal.style.transition = 'opacity 0.5s';
+        
+        // Create panel for results
+        const panel = document.createElement('div');
+        panel.style.backgroundColor = '#8B4513';
+        panel.style.borderRadius = '10px';
+        panel.style.padding = '30px';
+        panel.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+        panel.style.textAlign = 'center';
+        panel.style.maxWidth = '500px';
+        panel.style.width = '80%';
+        panel.style.border = isNewBestTime ? '8px solid #ffd700' : '8px solid #3a2214';
+        panel.style.transform = 'scale(0.9)';
+        panel.style.transition = 'transform 0.5s';
+        
+        // Create title
+        const title = document.createElement('h2');
+        title.textContent = isNewBestTime ? 'New Best Time!' : 'Level Complete!';
+        title.style.color = isNewBestTime ? '#ffd700' : '#ffaa00';
+        title.style.marginTop = '0';
+        title.style.fontSize = '28px';
+        title.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+        panel.appendChild(title);
+        
+        // Create current time display
+        const currentTimeElem = document.createElement('div');
+        currentTimeElem.style.marginTop = '20px';
+        currentTimeElem.style.marginBottom = '10px';
+        panel.appendChild(currentTimeElem);
+        
+        const currentTimeLabel = document.createElement('div');
+        currentTimeLabel.textContent = 'Your Time:';
+        currentTimeLabel.style.fontSize = '18px';
+        currentTimeLabel.style.color = '#faf0dc';
+        currentTimeElem.appendChild(currentTimeLabel);
+        
+        const currentTimeValue = document.createElement('div');
+        currentTimeValue.textContent = this.score.formatTime(currentTime);
+        currentTimeValue.style.fontSize = '36px';
+        currentTimeValue.style.fontWeight = 'bold';
+        currentTimeValue.style.color = isNewBestTime ? '#ffd700' : '#ffffff';
+        currentTimeValue.style.textShadow = isNewBestTime ? '0 0 10px rgba(255,215,0,0.7)' : 'none';
+        currentTimeElem.appendChild(currentTimeValue);
+        
+        // If there's a best time and it's not a new one, show comparison
+        if (!isNewBestTime && bestTime) {
+            const bestTimeElem = document.createElement('div');
+            bestTimeElem.style.marginTop = '20px';
+            bestTimeElem.style.marginBottom = '20px';
+            panel.appendChild(bestTimeElem);
+            
+            const bestTimeLabel = document.createElement('div');
+            bestTimeLabel.textContent = 'Best Time:';
+            bestTimeLabel.style.fontSize = '16px';
+            bestTimeLabel.style.color = '#faf0dc';
+            bestTimeElem.appendChild(bestTimeLabel);
+            
+            const bestTimeValue = document.createElement('div');
+            bestTimeValue.textContent = this.score.formatTime(bestTime);
+            bestTimeValue.style.fontSize = '24px';
+            bestTimeValue.style.color = '#ffd700';
+            bestTimeElem.appendChild(bestTimeValue);
+            
+            // Show difference
+            const difference = currentTime - bestTime;
+            const differenceElem = document.createElement('div');
+            differenceElem.textContent = `(+${this.score.formatTime(difference)})`;
+            differenceElem.style.fontSize = '18px';
+            differenceElem.style.color = '#ff6b6b';
+            bestTimeElem.appendChild(differenceElem);
+        }
+        
+        // Create continue button
+        const continueBtn = document.createElement('button');
+        continueBtn.textContent = 'Continue';
+        continueBtn.style.marginTop = '20px';
+        continueBtn.style.padding = '10px 30px';
+        continueBtn.style.fontSize = '18px';
+        continueBtn.style.backgroundColor = '#654321';
+        continueBtn.style.color = 'white';
+        continueBtn.style.border = 'none';
+        continueBtn.style.borderRadius = '5px';
+        continueBtn.style.cursor = 'pointer';
+        continueBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        
+        // Button hover effects
+        continueBtn.onmouseover = () => {
+            continueBtn.style.backgroundColor = '#755431';
+            continueBtn.style.transform = 'translateY(-2px)';
+            continueBtn.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+        };
+        
+        continueBtn.onmouseout = () => {
+            continueBtn.style.backgroundColor = '#654321';
+            continueBtn.style.transform = 'translateY(0)';
+            continueBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        };
+        
+        // Continue button click handler - close the modal
+        continueBtn.onclick = () => {
+            modal.style.opacity = '0';
+            panel.style.transform = 'scale(0.9)';
+            
+            setTimeout(() => {
+                if (document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                }
+            }, 500);
+        };
+        
+        panel.appendChild(continueBtn);
+        modal.appendChild(panel);
+        document.body.appendChild(modal);
+        
+        // Trigger animations
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            panel.style.transform = 'scale(1)';
+        }, 50);
+        
+        // Add keyboard handler to close with Enter or Space
+        const keyHandler = (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+                e.preventDefault();
+                continueBtn.click();
+                document.removeEventListener('keydown', keyHandler);
+            }
+        };
+        document.addEventListener('keydown', keyHandler);
+    }
+
+    /**
+     * Check Time Attack mode constraints (goal time)
+     */
+    checkTimeAttackConstraints() {
+        if (this.gameMode !== GAME_MODES.TIME_ATTACK || !this.score) {
+            return;
+        }
+
+        const timeGoal = this.score.timeGoal;
+        if (timeGoal > 0 && this.score.elapsedTime > timeGoal) {
+            // Time's up! Show failure message
+            this.showChallengeFailureMessage('time');
+        }
+    }
+
+    /**
+     * Check challenge mode constraints (time limit, moves limit)
+     * Called every frame when in challenge mode
+     */
+    checkChallengeConstraints() {
+        if (this.gameMode !== GAME_MODES.CHALLENGE || !this.score) {
+            return;
+        }
+
+        // Check time limit
+        if (this.gameModeSettings.challenge.timeLimit > 0) {
+            if (this.score.elapsedTime >= this.gameModeSettings.challenge.timeLimit) {
+                // Time's up! Show failure message
+                this.showChallengeFailureMessage('time');
+            }
+        }
+
+        // Check moves limit
+        if (this.gameModeSettings.challenge.movesLimit > 0) {
+            if (this.score.moves >= this.gameModeSettings.challenge.movesLimit) {
+                // Out of moves! Show failure message
+                this.showChallengeFailureMessage('moves');
+            }
+        }
+    }
+
+    /**
+     * Show a failure message when a challenge constraint is violated
+     * @param {string} reason - Reason for failure ('time' or 'moves')
+     */
+    showChallengeFailureMessage(reason) {
+        // Only show the message once
+        if (this.state !== GAME_STATES.PLAY) {
+            return;
+        }
+
+        // Pause the game
+        this.setState(GAME_STATES.PAUSED);
+
+        // Create failure message overlay
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'; // Semi-transparent overlay like pause screen
+        modal.style.zIndex = '1000';
+        modal.style.display = 'flex';
+        modal.style.flexDirection = 'column';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        modal.style.color = 'white';
+        modal.style.fontFamily = 'Arial, sans-serif';
+
+        // Create message panel
+        const panel = document.createElement('div');
+        
+        // Use similar styling to pause screen panel
+        const panelWidth = 400;
+        const panelHeight = 250;
+        
+        panel.style.width = `${panelWidth}px`;
+        panel.style.maxWidth = '80%';
+        panel.style.borderRadius = '15px';
+        panel.style.padding = '30px';
+        panel.style.boxSizing = 'border-box';
+        
+        // Add wooden background like pause screen
+        if (this.resources.images && this.resources.images.levelBackground && this.resources.images.levelBackground.image) {
+            // Create background div with clipped background image
+            panel.style.background = `url(${this.resources.images.levelBackground.image.src})`;
+            panel.style.backgroundSize = 'cover';
+            panel.style.position = 'relative';
+            
+            // Add dark overlay for better text contrast
+            const overlay = document.createElement('div');
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+            overlay.style.borderRadius = '15px';
+            panel.appendChild(overlay);
+        } else {
+            // Fallback if image is not available
+            panel.style.backgroundColor = 'rgba(101, 67, 33, 0.9)';
+        }
+        
+        // Add border like pause screen
+        panel.style.border = '8px solid #3a2214';
+        panel.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.5)';
+        panel.style.textAlign = 'center';
+        
+        // Create content container (to appear above the overlay)
+        const content = document.createElement('div');
+        content.style.position = 'relative';
+        content.style.zIndex = '1';
+        panel.appendChild(content);
+
+        // Create heading
+        const heading = document.createElement('h2');
+        heading.textContent = 'Challenge Failed!';
+        heading.style.color = '#ffaa00';
+        heading.style.marginTop = '0';
+        heading.style.fontSize = '28px';
+        heading.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.5)';
+        content.appendChild(heading);
+        
+        // Create message
+        const message = document.createElement('p');
+        if (reason === 'time') {
+            message.textContent = 'You ran out of time!';
+        } else {
+            message.textContent = 'You ran out of moves!';
+        }
+        message.style.fontSize = '20px';
+        message.style.marginBottom = '30px';
+        message.style.color = '#faf0dc';
+        content.appendChild(message);
+        
+        // Create button container
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'center';
+        buttonContainer.style.gap = '15px';
+        buttonContainer.style.marginTop = '20px';
+        content.appendChild(buttonContainer);
+        
+        // Create retry button
+        const retryBtn = document.createElement('button');
+        retryBtn.textContent = 'Retry Level';
+        retryBtn.style.backgroundColor = '#654321';
+        retryBtn.style.color = 'white';
+        retryBtn.style.border = 'none';
+        retryBtn.style.padding = '12px 20px';
+        retryBtn.style.borderRadius = '5px';
+        retryBtn.style.fontSize = '16px';
+        retryBtn.style.cursor = 'pointer';
+        retryBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        
+        // Add hover/active effects
+        retryBtn.onmouseover = () => {
+            retryBtn.style.backgroundColor = '#755431';
+            retryBtn.style.transform = 'translateY(-2px)';
+            retryBtn.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+        };
+        retryBtn.onmouseout = () => {
+            retryBtn.style.backgroundColor = '#654321';
+            retryBtn.style.transform = 'translateY(0)';
+            retryBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        };
+        buttonContainer.appendChild(retryBtn);
+        
+        // Create main menu button
+        const menuBtn = document.createElement('button');
+        menuBtn.textContent = 'Main Menu';
+        menuBtn.style.backgroundColor = '#654321';
+        menuBtn.style.color = 'white';
+        menuBtn.style.border = 'none';
+        menuBtn.style.padding = '12px 20px';
+        menuBtn.style.borderRadius = '5px';
+        menuBtn.style.fontSize = '16px';
+        menuBtn.style.cursor = 'pointer';
+        menuBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        
+        // Add hover/active effects
+        menuBtn.onmouseover = () => {
+            menuBtn.style.backgroundColor = '#755431';
+            menuBtn.style.transform = 'translateY(-2px)';
+            menuBtn.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+        };
+        menuBtn.onmouseout = () => {
+            menuBtn.style.backgroundColor = '#654321';
+            menuBtn.style.transform = 'translateY(0)';
+            menuBtn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+        };
+        buttonContainer.appendChild(menuBtn);
+        
+        // Add click event listeners
+        retryBtn.addEventListener('click', () => {
+            document.body.removeChild(modal);
+            this.restartLevel();
+        });
+        
+        menuBtn.addEventListener('click', () => {
+            document.body.removeChild(modal);
+            this.setState(GAME_STATES.INTRO);
+        });
+        
+        // Add keyboard handler to close with Enter or Space
+        const keyHandler = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                retryBtn.click();
+                document.removeEventListener('keydown', keyHandler);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                menuBtn.click();
+                document.removeEventListener('keydown', keyHandler);
+            }
+        };
+        document.addEventListener('keydown', keyHandler);
+        
+        // Append modal to body
+        modal.appendChild(panel);
+        document.body.appendChild(modal);
+        
+        // Animate the panel appearance
+        panel.style.transform = 'scale(0.9)';
+        panel.style.opacity = '0';
+        panel.style.transition = 'transform 0.3s, opacity 0.3s';
+        
+        setTimeout(() => {
+            panel.style.transform = 'scale(1)';
+            panel.style.opacity = '1';
+        }, 50);
     }
 
     /**

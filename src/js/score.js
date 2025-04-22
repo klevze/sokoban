@@ -21,6 +21,8 @@ export class Score {
         this.pushes = 0;       // Total boxes pushed
         this.boxesOnGoal = 0;  // Number of boxes currently on goals
         this.totalBoxes = 0;   // Total boxes in the level
+        this.timeGoal = null;  // Time goal for Time Attack mode
+        this.personalBest = null; // Personal best statistics
         
         // Timer properties
         this.startTime = null;     // Timestamp when timer started
@@ -32,7 +34,9 @@ export class Score {
             level: "Level",
             moves: "Moves",
             pushes: "Pushes",
-            time: "Time"
+            time: "Time",
+            boxes: "Boxes",
+            timeGoal: "Goal"
         };
     }
     
@@ -47,6 +51,7 @@ export class Score {
         this.textElements.moves = i18n.get('game.moves');
         this.textElements.pushes = i18n.get('game.pushes');
         this.textElements.time = i18n.get('game.time');
+        this.textElements.timeGoal = i18n.get('game.timeGoal') || 'Goal';
     }
 
     /**
@@ -151,6 +156,36 @@ export class Score {
     }
 
     /**
+     * Sets the time goal for Time Attack mode
+     * @param {number} timeGoal - Time goal in milliseconds
+     */
+    setTimeGoal(timeGoal) {
+        this.timeGoal = timeGoal;
+    }
+
+    /**
+     * Set personal best statistics from user progress
+     * @param {Object} personalBest - Object containing best moves, pushes, and time
+     */
+    setPersonalBest(personalBest) {
+        this.personalBest = personalBest;
+    }
+
+    /**
+     * Check if the current stats are better than personal best
+     * @returns {Object} - Object with isNewBestMoves, isNewBestPushes, isNewBestTime booleans
+     */
+    checkForNewBests() {
+        if (!this.personalBest) return { isNewBestMoves: false, isNewBestPushes: false, isNewBestTime: false };
+        
+        return {
+            isNewBestMoves: this.moves < this.personalBest.bestMoves,
+            isNewBestPushes: this.pushes < this.personalBest.bestPushes,
+            isNewBestTime: this.elapsedTime < this.personalBest.bestTime
+        };
+    }
+
+    /**
      * Draws the score and timer information on the canvas
      */
     draw() {
@@ -187,16 +222,26 @@ export class Score {
         const rightPadding = 120; // Pixels to leave for the man image on the right
         const usableWidth = canvasWidth - rightPadding;
         
-        // Calculate section widths with the right padding taken into account 
-        // Now with 5 sections to include boxes ratio
-        const sectionWidth = Math.floor(usableWidth / 5);
+        // Calculate section widths with the right padding taken into account
+        let sectionWidth;
+        let sections;
         
-        // Calculate section positions, distributing 5 elements evenly
+        // If we have a time goal (Time Attack mode), adjust the sections to make space
+        if (this.timeGoal !== null) {
+            sections = 6; // Add one more section for the time goal
+            sectionWidth = Math.floor(usableWidth / sections);
+        } else {
+            sections = 5;
+            sectionWidth = Math.floor(usableWidth / sections);
+        }
+        
+        // Calculate section positions
         const section1X = Math.floor(sectionWidth * 0.5);
         const section2X = Math.floor(sectionWidth * 1.5);
         const section3X = Math.floor(sectionWidth * 2.5);
         const section4X = Math.floor(sectionWidth * 3.5);
         const section5X = Math.floor(sectionWidth * 4.5);
+        const section6X = this.timeGoal !== null ? Math.floor(sectionWidth * 5.5) : 0;
         
         // Define icon dimensions
         const iconSize = 32;
@@ -215,6 +260,13 @@ export class Score {
         const pushesValue = `${this.pushes}`;
         const timeValue = this.formatTime(this.elapsedTime);
         const boxesValue = `${this.boxesOnGoal}/${this.totalBoxes}`;
+        const timeGoalValue = this.timeGoal !== null ? this.formatTime(this.timeGoal) : '';
+        
+        // Check if we have personal bests to display
+        const haveBests = this.personalBest && 
+            (this.personalBest.bestMoves !== undefined || 
+             this.personalBest.bestPushes !== undefined || 
+             this.personalBest.bestTime !== undefined);
         
         // Check if the icons are loaded
         if (this.resources.images) {
@@ -258,6 +310,32 @@ export class Score {
                 
                 ctx.fillStyle = '#ffaa00';
                 ctx.fillText(movesValue, section2X, bottomRowY);
+                
+                // Draw best moves if available
+                if (haveBests && this.personalBest.bestMoves !== undefined) {
+                    const bestLabel = "BEST";
+                    const bestValue = this.personalBest.bestMoves.toString();
+                    
+                    // Draw "BEST" label
+                    ctx.font = "12px Arial";
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillText(bestLabel, section2X, topRowY - 18 + 1);
+                    ctx.fillStyle = '#00ffcc';
+                    ctx.fillText(bestLabel, section2X, topRowY - 18);
+                    
+                    // Draw best value
+                    ctx.font = "14px Arial";
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillText(bestValue, section2X, bottomRowY + 20 + 1);
+                    
+                    // Color coding for comparing to best
+                    const isBetter = this.moves < this.personalBest.bestMoves;
+                    const isTied = this.moves === this.personalBest.bestMoves;
+                    const color = isBetter ? '#00ff00' : (isTied ? '#00ffcc' : '#ffffff');
+                    
+                    ctx.fillStyle = color;
+                    ctx.fillText(bestValue, section2X, bottomRowY + 20);
+                }
             }
             
             // Section 3: Pushes
@@ -279,6 +357,32 @@ export class Score {
                 
                 ctx.fillStyle = '#ffaa00';
                 ctx.fillText(pushesValue, section3X, bottomRowY);
+                
+                // Draw best pushes if available
+                if (haveBests && this.personalBest.bestPushes !== undefined) {
+                    const bestLabel = "BEST";
+                    const bestValue = this.personalBest.bestPushes.toString();
+                    
+                    // Draw "BEST" label
+                    ctx.font = "12px Arial";
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillText(bestLabel, section3X, topRowY - 18 + 1);
+                    ctx.fillStyle = '#00ffcc';
+                    ctx.fillText(bestLabel, section3X, topRowY - 18);
+                    
+                    // Draw best value
+                    ctx.font = "14px Arial";
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillText(bestValue, section3X, bottomRowY + 20 + 1);
+                    
+                    // Color coding for comparing to best
+                    const isBetter = this.pushes < this.personalBest.bestPushes;
+                    const isTied = this.pushes === this.personalBest.bestPushes;
+                    const color = isBetter ? '#00ff00' : (isTied ? '#00ffcc' : '#ffffff');
+                    
+                    ctx.fillStyle = color;
+                    ctx.fillText(bestValue, section3X, bottomRowY + 20);
+                }
             }
             
             // Section 4: Boxes
@@ -321,6 +425,73 @@ export class Score {
                 
                 ctx.fillStyle = '#ffaa00';
                 ctx.fillText(timeValue, section5X, bottomRowY);
+                
+                // Draw best time if available
+                if (haveBests && this.personalBest.bestTime !== undefined) {
+                    const bestLabel = "BEST";
+                    const bestValue = this.formatTime(this.personalBest.bestTime);
+                    
+                    // Draw "BEST" label
+                    ctx.font = "12px Arial";
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillText(bestLabel, section5X, topRowY - 18 + 1);
+                    ctx.fillStyle = '#00ffcc';
+                    ctx.fillText(bestLabel, section5X, topRowY - 18);
+                    
+                    // Draw best value
+                    ctx.font = "14px Arial";
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillText(bestValue, section5X, bottomRowY + 20 + 1);
+                    
+                    // Color coding for comparing to best
+                    const isBetter = this.elapsedTime < this.personalBest.bestTime;
+                    const isTied = this.elapsedTime === this.personalBest.bestTime;
+                    const color = isBetter ? '#00ff00' : (isTied ? '#00ffcc' : '#ffffff');
+                    
+                    ctx.fillStyle = color;
+                    ctx.fillText(bestValue, section5X, bottomRowY + 20);
+                }
+            }
+            
+            // Section 6: Time Goal (only in Time Attack mode)
+            if (this.timeGoal !== null) {
+                // Use the same time icon or a trophy icon if available
+                const iconX = section6X - iconSize/2;
+                const iconY = topRowY - iconSize/2;
+                
+                // Use scoreTime image or trophy if available
+                const timeGoalIcon = this.resources.images.scoreTrophy || this.resources.images.scoreTime;
+                
+                if (timeGoalIcon && timeGoalIcon.image) {
+                    ctx.drawImage(
+                        timeGoalIcon.image,
+                        iconX,
+                        iconY,
+                        iconSize,
+                        iconSize
+                    );
+                }
+                
+                // Draw goal label
+                ctx.font = "16px Arial";
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillText(this.textElements.timeGoal, section6X, topRowY - 18 + 1);
+                
+                ctx.fillStyle = '#ffdd00';
+                ctx.fillText(this.textElements.timeGoal, section6X, topRowY - 18);
+                
+                // Draw time goal value
+                ctx.font = "22px Arial";
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillText(timeGoalValue, section6X, bottomRowY + 1);
+                
+                // Color the time goal based on whether we're beating it or not
+                const timeColor = this.elapsedTime <= this.timeGoal ? '#00ff00' : '#ff6666';
+                ctx.fillStyle = timeColor;
+                ctx.fillText(timeGoalValue, section6X, bottomRowY);
+                
+                // Return to normal font size
+                ctx.font = "22px Arial";
             }
         }
     }

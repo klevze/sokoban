@@ -17,15 +17,25 @@ export default {
     moves: "Lépések",
     pushes: "Tolások",
     time: "Idő",
+    timeGoal: "Cél",
     restart: "Szint újraindítása",
     undo: "Visszavonás",
     completed: "Szint teljesítve!",
     nextLevel: "Nyomj Szóközt a folytatáshoz",
     victory: "Gratulálunk!",
     allLevelsComplete: "Gratulálunk! Minden szintet teljesítettél!",
-    confirmExit: "Visszatérés a főmenübe?",
+    confirmExit: "Vissza a főmenübe?",
     confirmRestart: "Biztosan újra szeretnéd kezdeni ezt a szintet?",
     loading: "Betöltés..."
+  },
+  gameModes: {
+    select: "Válasszon Játékmódot",
+    normal: "NORMÁL MÓD",
+    timeAttack: "IDŐFUTAM",
+    challenge: "KIHÍVÁS MÓD",
+    normalDescription: "Szabványos játékmenet időkorlát nélkül",
+    timeAttackDescription: "Versenyezzen az idővel a legjobb eredményért",
+    challengeDescription: "Korlátozott lépések és idő - sikerül legyőznie?"
   },
   settings: {
     language: "Nyelv",
@@ -70,6 +80,29 @@ export default {
     pause: "Játék szüneteltetése",
     close: "Bezárás",
     settings: "Beállítások",
-    undo: "Visszavonás"
+    undo: "Visszavonás",
+    levelEditor: "Pályaszerkesztő",
+    back: "Vissza"
+  },
+  levelSelect: {
+    title: "Szint kiválasztása"
+  },
+  auth: {
+    signIn: "Bejelentkezés",
+    signOut: "Kijelentkezés",
+    register: "Regisztráció",
+    account: "Fiók",
+    name: "Név",
+    email: "E-mail",
+    password: "Jelszó",
+    confirmPassword: "Jelszó megerősítése",
+    signingIn: "Bejelentkezés...",
+    registering: "Regisztráció...",
+    fillAllFields: "Kérjük, töltse ki az összes mezőt",
+    passwordsDoNotMatch: "A jelszavak nem egyeznek",
+    passwordTooShort: "A jelszónak legalább 6 karakterből kell állnia",
+    loginFailed: "Sikertelen bejelentkezés. Ellenőrizze adatait.",
+    registrationFailed: "Sikertelen regisztráció. Kérjük, próbálja újra.",
+    progressLoaded: "Haladás betöltve a felhőből"
   }
 };

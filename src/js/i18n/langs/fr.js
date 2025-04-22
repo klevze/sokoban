@@ -17,6 +17,7 @@ export default {
     moves: "Mouvements",
     pushes: "Poussées",
     time: "Temps",
+    timeGoal: "Objectif",
     restart: "Redémarrer le niveau",
     undo: "Annuler le mouvement",
     completed: "Niveau terminé !",
@@ -26,6 +27,15 @@ export default {
     confirmExit: "Retourner au menu principal ?",
     confirmRestart: "Êtes-vous sûr de vouloir redémarrer ce niveau ?",
     loading: "Chargement..."
+  },
+  gameModes: {
+    select: "Sélectionnez le Mode de Jeu",
+    normal: "MODE NORMAL",
+    timeAttack: "CONTRE LA MONTRE",
+    challenge: "MODE DÉFI",
+    normalDescription: "Gameplay standard sans limite de temps",
+    timeAttackDescription: "Faites la course contre la montre pour le meilleur temps",
+    challengeDescription: "Mouvements et temps limités - pouvez-vous réussir ?"
   },
   settings: {
     language: "Langue",
@@ -71,6 +81,43 @@ export default {
     pause: "Mettre en pause",
     close: "Fermer",
     settings: "Paramètres",
-    undo: "Annuler"
+    undo: "Annuler",
+    levelEditor: "Éditeur de niveaux",
+    back: "Retour"
+  },
+  levelSelect: {
+    title: "Sélectionner le niveau"
+  },
+  auth: {
+    signIn: "Se connecter",
+    signOut: "Se déconnecter",
+    register: "S'inscrire",
+    account: "Compte",
+    name: "Nom",
+    email: "E-mail",
+    password: "Mot de passe",
+    confirmPassword: "Confirmer le mot de passe",
+    signingIn: "Connexion en cours...",
+    registering: "Inscription en cours...",
+    fillAllFields: "Veuillez remplir tous les champs",
+    passwordsDoNotMatch: "Les mots de passe ne correspondent pas",
+    passwordTooShort: "Le mot de passe doit contenir au moins 6 caractères",
+    loginFailed: "Échec de connexion. Veuillez vérifier vos informations.",
+    registrationFailed: "Échec d'inscription. Veuillez réessayer.",
+    progressLoaded: "Progression chargée depuis le cloud"
+  },
+  testing: {
+    running: "Exécution des tests...",
+    passed: "Test réussi",
+    failed: "Test échoué",
+    levelCompletionTitle: "Test de Fin de Niveau",
+    movementTitle: "Test de Déplacement du Joueur",
+    boxPushTitle: "Test de Poussée de Boîte",
+    undoTitle: "Test de Fonction d'Annulation",
+    goalDetectionTitle: "Test de Détection d'Objectif",
+    resultsTitle: "Résultats des Tests",
+    startTesting: "Démarrer les Tests",
+    stopTesting: "Arrêter les Tests",
+    testCompleted: "Tous les tests sont terminés"
   }
 };

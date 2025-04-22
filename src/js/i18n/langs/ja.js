@@ -17,6 +17,7 @@ export default {
     moves: "歩数",
     pushes: "押す回数",
     time: "時間",
+    timeGoal: "目標",
     restart: "レベルをやり直す",
     undo: "元に戻す",
     completed: "レベルクリア！",
@@ -45,7 +46,8 @@ export default {
     veryFastSpeed: "とても速い",
     musicOn: "音楽オン",
     musicOff: "音楽オフ",
-    navigation: "ナビゲーション"
+    navigation: "ナビゲーション",
+    openSettings: "設定を開く"
   },
   speeds: {
     slow: "遅い",
@@ -55,7 +57,7 @@ export default {
   },
   loading: {
     title: "読み込み中",
-    preparing: "スペースキーを押してゲームを読み込む",
+    preparing: "スペースキーを押してゲームをロード",
     loading: "読み込み中"
   },
   error: {
@@ -65,11 +67,48 @@ export default {
     play: "プレイ",
     home: "ホーム",
     levelSelect: "レベル選択",
-    restart: "再スタート",
+    restart: "リスタート",
     toggleMusic: "音楽の切り替え",
-    pause: "一時停止",
+    pause: "ゲームを一時停止",
     close: "閉じる",
     settings: "設定",
-    undo: "元に戻す"
+    undo: "元に戻す",
+    levelEditor: "レベルエディタ",
+    back: "戻る"
+  },
+  levelSelect: {
+    title: "レベル選択"
+  },
+  auth: {
+    signIn: "ログイン",
+    signOut: "ログアウト",
+    register: "登録",
+    account: "アカウント",
+    name: "名前",
+    email: "メールアドレス",
+    password: "パスワード",
+    confirmPassword: "パスワード確認",
+    signingIn: "ログイン中...",
+    registering: "登録中...",
+    fillAllFields: "すべての項目を入力してください",
+    passwordsDoNotMatch: "パスワードが一致しません",
+    passwordTooShort: "パスワードは6文字以上である必要があります",
+    loginFailed: "ログインに失敗しました。認証情報を確認してください。",
+    registrationFailed: "登録に失敗しました。もう一度お試しください。",
+    progressLoaded: "クラウドから進捗を読み込みました"
+  },
+  testing: {
+    running: "テスト実行中...",
+    passed: "テスト合格",
+    failed: "テスト不合格",
+    levelCompletionTitle: "レベルクリアテスト",
+    movementTitle: "プレイヤー移動テスト",
+    boxPushTitle: "箱押しテスト",
+    undoTitle: "元に戻す機能テスト",
+    goalDetectionTitle: "ゴール検出テスト",
+    resultsTitle: "テスト結果",
+    startTesting: "テスト開始",
+    stopTesting: "テスト停止",
+    testCompleted: "すべてのテスト完了"
   }
 };

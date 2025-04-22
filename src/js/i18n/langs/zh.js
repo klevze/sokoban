@@ -17,6 +17,7 @@ export default {
     moves: "步数",
     pushes: "推动",
     time: "时间",
+    timeGoal: "目标",
     restart: "重新开始",
     undo: "撤销",
     completed: "关卡完成！",
@@ -45,7 +46,8 @@ export default {
     veryFastSpeed: "非常快",
     musicOn: "音乐开",
     musicOff: "音乐关",
-    navigation: "导航"
+    navigation: "导航",
+    openSettings: "打开设置"
   },
   speeds: {
     slow: "慢",
@@ -70,6 +72,43 @@ export default {
     pause: "暂停游戏",
     close: "关闭",
     settings: "设置",
-    undo: "撤销"
+    undo: "撤销",
+    levelEditor: "关卡编辑器",
+    back: "返回"
+  },
+  levelSelect: {
+    title: "选择关卡"
+  },
+  auth: {
+    signIn: "登录",
+    signOut: "退出登录",
+    register: "注册",
+    account: "账户",
+    name: "姓名",
+    email: "电子邮箱",
+    password: "密码",
+    confirmPassword: "确认密码",
+    signingIn: "登录中...",
+    registering: "注册中...",
+    fillAllFields: "请填写所有字段",
+    passwordsDoNotMatch: "密码不匹配",
+    passwordTooShort: "密码必须至少包含6个字符",
+    loginFailed: "登录失败。请检查您的凭据。",
+    registrationFailed: "注册失败。请重试。",
+    progressLoaded: "从云端加载进度"
+  },
+  testing: {
+    running: "测试运行中...",
+    passed: "测试通过",
+    failed: "测试失败",
+    levelCompletionTitle: "关卡完成测试",
+    movementTitle: "玩家移动测试",
+    boxPushTitle: "推箱子测试",
+    undoTitle: "撤销功能测试",
+    goalDetectionTitle: "目标检测测试",
+    resultsTitle: "测试结果",
+    startTesting: "开始测试",
+    stopTesting: "停止测试",
+    testCompleted: "所有测试完成"
   }
 };
