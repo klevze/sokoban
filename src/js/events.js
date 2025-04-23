@@ -84,6 +84,17 @@ export function initEvents(gameInstance) {
 
     // Keyboard controls for desktop
     document.addEventListener("keydown", function(e) {
+        // Check if authentication dialog is open - skip game keypresses if it is
+        if (document.querySelector('.account-dialog') || document.querySelector('.dialog-overlay')) {
+            // Only allow ESC key to close dialogs
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                // Let event propagate naturally to close dialogs
+                return;
+            }
+            // Block all other keys when auth dialogs are open
+            return;
+        }
+        
         // Prevent default actions for game keys to avoid page scrolling
         if ([27, 32, 37, 38, 39, 40, 80, 82, 68].includes(e.keyCode)) {
             e.preventDefault();

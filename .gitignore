@@ -66,3 +66,4 @@ temp/
 
 # Local development
 .local-dev/
+sync.sh
