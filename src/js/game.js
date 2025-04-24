@@ -1699,6 +1699,238 @@ class Game {
     }
 
     /**
+     * Display intro/title screen
+     */
+    showIntroScreen() {
+        // Get canvas dimensions
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
+        // Draw the background image with "cover" behavior
+        if (this.resources.images && this.resources.images.main && this.resources.images.main.image) {
+            const img = this.resources.images.main.image;
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+            
+            // Calculate aspect ratios
+            const imgAspect = imgWidth / imgHeight;
+            const canvasAspect = canvasWidth / canvasHeight;
+            
+            // Variables for the crop/position calculation
+            let sx = 0; // source x
+            let sy = 0; // source y
+            let sWidth = imgWidth; // source width
+            let sHeight = imgHeight; // source height
+            
+            // Implement CSS "cover" behavior:
+            // If image aspect ratio is greater than canvas aspect ratio,
+            // we crop the image width (crop from sides)
+            if (imgAspect > canvasAspect) {
+                sWidth = imgHeight * canvasAspect;
+                sx = (imgWidth - sWidth) / 2; // Center the cropped portion horizontally
+            } 
+            // If image aspect ratio is less than canvas aspect ratio,
+            // we crop the image height (crop from top/bottom)
+            else if (imgAspect < canvasAspect) {
+                sHeight = imgWidth / canvasAspect;
+                sy = (imgHeight - sHeight) / 2; // Center the cropped portion vertically
+            }
+            
+            // Draw the image to fill the entire canvas
+            this.ctx.drawImage(
+                img,
+                sx, sy, sWidth, sHeight, // Source rectangle (cropped portion)
+                0, 0, canvasWidth, canvasHeight // Destination rectangle (full canvas)
+            );
+        } else {
+            // Fallback if image isn't loaded - fill with a color
+            this.ctx.fillStyle = "#000000";
+            this.ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        }
+
+        this.ctx.textAlign = "center";
+        this.ctx.font = "20px Arial";
+
+        // Position logo with wave effect
+        const logoImg = this.resources.images.logo.image;
+        const logoWidth = logoImg.width;
+        const logoHeight = logoImg.height;
+        const frame = Date.now() * 0.01;
+
+        // Animate the logo with a wave effect
+        for (let y = 0; y < logoHeight; y++) {
+            const x = Math.sin(y * 0.05 + frame) * 5 + (canvasWidth / 2 - logoWidth / 2);
+            this.ctx.drawImage(logoImg, 0, y, logoWidth, 1, x, y + -20, logoWidth, 1);
+        }
+
+        // Calculate button dimensions and positions for horizontal layout
+        const btnPlayImg = this.resources.images.btnPlay.image;
+        const buttonWidth = btnPlayImg.width;
+        const buttonHeight = btnPlayImg.height;
+        const buttonSpacing = 20; // Space between buttons
+        
+        // Calculate total width of all buttons and spacing
+        // If user is logged in, we'll show PLAY and LEVEL EDITOR buttons (2 buttons)
+        // If user is NOT logged in, we'll show PLAY, LEVEL EDITOR, and SIGN IN buttons (3 buttons)
+        const numButtons = this.isUserAuthenticated ? 2 : 3;
+        const totalButtonsWidth = (buttonWidth * numButtons) + (buttonSpacing * (numButtons - 1));
+        
+        // Calculate starting X position to center all buttons as a group
+        const startX = (canvasWidth - totalButtonsWidth) / 2;
+        
+        // Common Y position for all buttons - positioned at 70% of canvas height
+        const buttonsY = canvasHeight * 0.7;
+        
+        // Draw the PLAY button (first button)
+        const playX = startX;
+        this.ctx.drawImage(btnPlayImg, playX, buttonsY);
+        
+        // Get "PLAY" text and convert to uppercase
+        const newGameText = this.resources.i18n.get('buttons.play').toUpperCase();
+        
+        // Adjust font size based on text length to prevent overflow
+        let fontSize = 30; // Default size
+        if (newGameText.length > 10) {
+            fontSize = 24;
+        }
+        if (newGameText.length > 15) {
+            fontSize = 20;
+        }
+        
+        this.ctx.font = `bold ${fontSize}px Arial`;
+        
+        // Position text centered in the button
+        const playBtnCenterY = buttonsY + buttonHeight/2 + 10; // +10 for optical centering
+        
+        // Text shadow for better visibility
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(newGameText, playX + buttonWidth/2 + 2, playBtnCenterY + 2);
+        
+        // Main text color
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(newGameText, playX + buttonWidth/2, playBtnCenterY);
+        
+        // Draw the LEVEL EDITOR button (second button)
+        const editorX = playX + buttonWidth + buttonSpacing;
+        this.ctx.drawImage(btnPlayImg, editorX, buttonsY);
+        
+        // Get "LEVEL EDITOR" text and convert to uppercase
+        const editorText = this.resources.i18n.get('buttons.levelEditor').toUpperCase();
+        
+        // Adjust font size based on text length to prevent overflow
+        let editorFontSize = 30; // Default size
+        if (editorText.length > 10) {
+            editorFontSize = 24;
+        }
+        if (editorText.length > 15) {
+            editorFontSize = 20;
+        }
+        
+        // Set the font size for editor button text
+        this.ctx.font = `bold ${editorFontSize}px Arial`;
+        
+        // Text shadow for better visibility
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(editorText, editorX + buttonWidth/2 + 2, playBtnCenterY + 2);
+        
+        // Main text color
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(editorText, editorX + buttonWidth/2, playBtnCenterY);
+        
+        // Initialize buttonAreas object
+        this.buttonAreas = {
+            play: { x: playX, y: buttonsY, width: buttonWidth, height: buttonHeight },
+            editor: { x: editorX, y: buttonsY, width: buttonWidth, height: buttonHeight }
+        };
+
+        // If user is authenticated, display username
+        if (this.isUserAuthenticated && this.userProfile) {
+            // Draw user info above the buttons
+            this.ctx.font = "bold 20px Arial";
+            this.ctx.textAlign = "center";
+            
+            // Username with welcome message
+            const displayName = this.userProfile.displayName || 'User';
+            const welcomeMessage = `${this.resources.i18n.get('auth.welcome')}, ${displayName}`;
+            
+            const userInfoY = buttonsY - 60; // Increased from -30 to -60 for more space between welcome message and buttons
+            
+            // Text shadow for better visibility
+            this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+            this.ctx.fillText(welcomeMessage, canvasWidth / 2 + 2, userInfoY + 2);
+            
+            // Main text color with a highlight color
+            this.ctx.fillStyle = "#ffcc00"; // Gold/yellow color for the username
+            this.ctx.fillText(welcomeMessage, canvasWidth / 2, userInfoY);
+            
+            // Add sign out text below (smaller)
+            this.ctx.font = "16px Arial";
+            const signOutText = `(${this.resources.i18n.get('auth.clickToSignOut')})`;
+            
+            // Text shadow for better visibility
+            this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+            this.ctx.fillText(signOutText, canvasWidth / 2 + 2, userInfoY + 22 + 2);
+            
+            // Light gray for the sign out text
+            this.ctx.fillStyle = "#cccccc";
+            this.ctx.fillText(signOutText, canvasWidth / 2, userInfoY + 22);
+            
+            // Add clickable area for signing out
+            this.buttonAreas.signOut = {
+                x: canvasWidth / 2 - 100,
+                y: userInfoY - 20,
+                width: 200,
+                height: 50
+            };
+        } else {
+            // User is not authenticated, draw the LOGIN button (third button)
+            const loginX = editorX + buttonWidth + buttonSpacing;
+            this.ctx.drawImage(btnPlayImg, loginX, buttonsY);
+            
+            // Get "SIGN IN" text and convert to uppercase
+            const loginText = this.resources.i18n.get('auth.signIn').toUpperCase();
+            
+            // Adjust font size based on text length to prevent overflow
+            let loginFontSize = 30; // Default size
+            if (loginText.length > 10) {
+                loginFontSize = 24;
+            }
+            if (loginText.length > 15) {
+                loginFontSize = 20;
+            }
+            
+            // Set the font size for login button text
+            this.ctx.font = `bold ${loginFontSize}px Arial`;
+            
+            // Text shadow for better visibility
+            this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+            this.ctx.fillText(loginText, loginX + buttonWidth/2 + 2, playBtnCenterY + 2);
+            
+            // Main text color
+            this.ctx.fillStyle = "white";
+            this.ctx.fillText(loginText, loginX + buttonWidth/2, playBtnCenterY);
+            
+            // Add login button to clickable areas
+            this.buttonAreas.login = { x: loginX, y: buttonsY, width: buttonWidth, height: buttonHeight };
+        }
+        
+        // Draw version info at the bottom right corner of the canvas
+        this.ctx.font = "10px Arial";
+        this.ctx.textAlign = "right";
+        
+        // Dynamic position for version text - 10px from right and bottom edges
+        const versionX = canvasWidth - 10;
+        const versionY = canvasHeight - 10;
+        
+        this.ctx.fillStyle = "black";
+        this.ctx.fillText(`© ${COPYRIGHT_YEAR} / Version: ${VERSION}`, versionX + 1, versionY + 1);
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(`© ${COPYRIGHT_YEAR} / Version: ${VERSION}`, versionX, versionY);
+        
+        console.log("Button areas:", this.buttonAreas);
+    }
+
+    /**
      * Display level selection screen
      * This screen allows selecting a level and automatically transitions to showing the dialog
      */
@@ -2015,193 +2247,6 @@ class Game {
         const c1 = 1.70158;
         const c3 = c1 + 1;
         return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-    }
-
-    /**
-     * Display intro/title screen
-     */
-    showIntroScreen() {
-        // Get canvas dimensions
-        const canvasWidth = this.canvas.width;
-        const canvasHeight = this.canvas.height;
-        
-        // Draw the background image with "cover" behavior
-        if (this.resources.images && this.resources.images.main && this.resources.images.main.image) {
-            const img = this.resources.images.main.image;
-            const imgWidth = img.width;
-            const imgHeight = img.height;
-            
-            // Calculate aspect ratios
-            const imgAspect = imgWidth / imgHeight;
-            const canvasAspect = canvasWidth / canvasHeight;
-            
-            // Variables for the crop/position calculation
-            let sx = 0; // source x
-            let sy = 0; // source y
-            let sWidth = imgWidth; // source width
-            let sHeight = imgHeight; // source height
-            
-            // Implement CSS "cover" behavior:
-            // If image aspect ratio is greater than canvas aspect ratio,
-            // we crop the image width (crop from sides)
-            if (imgAspect > canvasAspect) {
-                sWidth = imgHeight * canvasAspect;
-                sx = (imgWidth - sWidth) / 2; // Center the cropped portion horizontally
-            } 
-            // If image aspect ratio is less than canvas aspect ratio,
-            // we crop the image height (crop from top/bottom)
-            else if (imgAspect < canvasAspect) {
-                sHeight = imgWidth / canvasAspect;
-                sy = (imgHeight - sHeight) / 2; // Center the cropped portion vertically
-            }
-            
-            // Draw the image to fill the entire canvas
-            this.ctx.drawImage(
-                img,
-                sx, sy, sWidth, sHeight, // Source rectangle (cropped portion)
-                0, 0, canvasWidth, canvasHeight // Destination rectangle (full canvas)
-            );
-        } else {
-            // Fallback if image isn't loaded - fill with a color
-            this.ctx.fillStyle = "#000000";
-            this.ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-        }
-
-        this.ctx.textAlign = "center";
-        this.ctx.font = "20px Arial";
-
-        // Position logo with wave effect
-        const logoImg = this.resources.images.logo.image;
-        const logoWidth = logoImg.width;
-        const logoHeight = logoImg.height;
-        const frame = Date.now() * 0.01;
-
-        // Animate the logo with a wave effect
-        for (let y = 0; y < logoHeight; y++) {
-            const x = Math.sin(y * 0.05 + frame) * 5 + (canvasWidth / 2 - logoWidth / 2);
-            this.ctx.drawImage(logoImg, 0, y, logoWidth, 1, x, y + -20, logoWidth, 1);
-        }
-
-        // Calculate button dimensions and positions for horizontal layout
-        const btnPlayImg = this.resources.images.btnPlay.image;
-        const buttonWidth = btnPlayImg.width;
-        const buttonHeight = btnPlayImg.height;
-        const buttonSpacing = 20; // Space between buttons
-        
-        // Calculate total width of all buttons and spacing
-        const totalButtonsWidth = (buttonWidth * 3) + (buttonSpacing * 2);
-        
-        // Calculate starting X position to center all buttons as a group
-        const startX = (canvasWidth - totalButtonsWidth) / 2;
-        
-        // Common Y position for all buttons - positioned at 70% of canvas height
-        const buttonsY = canvasHeight * 0.7;
-        
-        // Draw the PLAY button (first button)
-        const playX = startX;
-        this.ctx.drawImage(btnPlayImg, playX, buttonsY);
-        
-        // Get "PLAY" text and convert to uppercase
-        const newGameText = this.resources.i18n.get('buttons.play').toUpperCase();
-        
-        // Adjust font size based on text length to prevent overflow
-        let fontSize = 30; // Default size
-        if (newGameText.length > 10) {
-            fontSize = 24; // Smaller text for longer strings (like French)
-        }
-        if (newGameText.length > 15) {
-            fontSize = 20; // Even smaller for very long translations
-        }
-        
-        this.ctx.font = `bold ${fontSize}px Arial`;
-        
-        // Position text centered in the button
-        const playBtnCenterY = buttonsY + buttonHeight/2 + 10; // +10 for optical centering
-        
-        // Text shadow for better visibility
-        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
-        this.ctx.fillText(newGameText, playX + buttonWidth/2 + 2, playBtnCenterY + 2);
-        
-        // Main text color
-        this.ctx.fillStyle = "white";
-        this.ctx.fillText(newGameText, playX + buttonWidth/2, playBtnCenterY);
-        
-        // Draw the LEVEL EDITOR button (second button)
-        const editorX = playX + buttonWidth + buttonSpacing;
-        this.ctx.drawImage(btnPlayImg, editorX, buttonsY);
-        
-        // Get "LEVEL EDITOR" text and convert to uppercase
-        const editorText = this.resources.i18n.get('buttons.levelEditor').toUpperCase();
-        
-        // Adjust font size based on text length to prevent overflow
-        let editorFontSize = 30; // Default size
-        if (editorText.length > 10) {
-            editorFontSize = 24; // Smaller text for longer strings
-        }
-        if (editorText.length > 15) {
-            editorFontSize = 20; // Even smaller for very long translations
-        }
-        
-        // Set the font size for editor button text
-        this.ctx.font = `bold ${editorFontSize}px Arial`;
-        
-        // Text shadow for better visibility
-        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
-        this.ctx.fillText(editorText, editorX + buttonWidth/2 + 2, playBtnCenterY + 2);
-        
-        // Main text color
-        this.ctx.fillStyle = "white";
-        this.ctx.fillText(editorText, editorX + buttonWidth/2, playBtnCenterY);
-        
-        // Draw the LOGIN button (third button)
-        const loginX = editorX + buttonWidth + buttonSpacing;
-        this.ctx.drawImage(btnPlayImg, loginX, buttonsY);
-        
-        // Get "SIGN IN" text and convert to uppercase
-        const loginText = this.resources.i18n.get('auth.signIn').toUpperCase();
-        console.log("Login text:", loginText);
-        
-        // Adjust font size based on text length to prevent overflow
-        let loginFontSize = 30; // Default size
-        if (loginText.length > 10) {
-            loginFontSize = 24; // Smaller text for longer strings
-        }
-        if (loginText.length > 15) {
-            loginFontSize = 20; // Even smaller for very long translations
-        }
-        
-        // Set the font size for login button text
-        this.ctx.font = `bold ${loginFontSize}px Arial`;
-        
-        // Text shadow for better visibility
-        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
-        this.ctx.fillText(loginText, loginX + buttonWidth/2 + 2, playBtnCenterY + 2);
-        
-        // Main text color
-        this.ctx.fillStyle = "white";
-        this.ctx.fillText(loginText, loginX + buttonWidth/2, playBtnCenterY);
-        
-        // Draw version info at the bottom right corner of the canvas
-        this.ctx.font = "10px Arial";
-        this.ctx.textAlign = "right";
-        
-        // Dynamic position for version text - 10px from right and bottom edges
-        const versionX = canvasWidth - 10;
-        const versionY = canvasHeight - 10;
-        
-        this.ctx.fillStyle = "black";
-        this.ctx.fillText(`© ${COPYRIGHT_YEAR} / Version: ${VERSION}`, versionX + 1, versionY + 1);
-        this.ctx.fillStyle = "white";
-        this.ctx.fillText(`© ${COPYRIGHT_YEAR} / Version: ${VERSION}`, versionX, versionY);
-
-        // Store button areas for click detection, with the new horizontal positions
-        this.buttonAreas = {
-            play: { x: playX, y: buttonsY, width: buttonWidth, height: buttonHeight },
-            editor: { x: editorX, y: buttonsY, width: buttonWidth, height: buttonHeight },
-            login: { x: loginX, y: buttonsY, width: buttonWidth, height: buttonHeight }
-        };
-        
-        console.log("Button areas:", this.buttonAreas);
     }
 
     /**

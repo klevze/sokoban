@@ -104,7 +104,11 @@ export default {
     passwordTooShort: "Passwort muss mindestens 6 Zeichen lang sein",
     loginFailed: "Anmeldung fehlgeschlagen. Bitte überprüfe deine Zugangsdaten.",
     registrationFailed: "Registrierung fehlgeschlagen. Bitte versuche es erneut.",
-    progressLoaded: "Fortschritt aus der Cloud geladen"
+    progressLoaded: "Fortschritt aus der Cloud geladen",
+    welcome: "Willkommen",
+    clickToSignOut: "Zum Abmelden klicken",
+    confirmSignOut: "Bist du sicher, dass du dich abmelden möchtest?",
+    registrationSuccess: "Registrierung erfolgreich! Du bist jetzt angemeldet."
   },
   testing: {
     running: "Tests werden ausgeführt...",

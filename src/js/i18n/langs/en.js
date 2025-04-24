@@ -123,7 +123,11 @@ export default {
     passwordTooShort: "Password must be at least 6 characters",
     loginFailed: "Login failed. Please check your credentials and try again.",
     registrationFailed: "Registration failed. Please try again.",
-    progressLoaded: "Progress loaded from cloud"
+    progressLoaded: "Progress loaded from cloud",
+    welcome: "Welcome",
+    clickToSignOut: "Click to sign out",
+    confirmSignOut: "Are you sure you want to sign out?",
+    registrationSuccess: "Registration successful! You are now logged in."
   },
   testing: {
     running: "Running tests...",

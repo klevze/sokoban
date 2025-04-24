@@ -104,7 +104,11 @@ export default {
     passwordTooShort: "Le mot de passe doit contenir au moins 6 caractères",
     loginFailed: "Échec de connexion. Veuillez vérifier vos informations.",
     registrationFailed: "Échec d'inscription. Veuillez réessayer.",
-    progressLoaded: "Progression chargée depuis le cloud"
+    progressLoaded: "Progression chargée depuis le cloud",
+    welcome: "Bienvenue",
+    clickToSignOut: "Cliquez pour vous déconnecter",
+    confirmSignOut: "Êtes-vous sûr de vouloir vous déconnecter ?",
+    registrationSuccess: "Inscription réussie ! Vous êtes maintenant connecté."
   },
   testing: {
     running: "Exécution des tests...",

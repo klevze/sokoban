@@ -104,7 +104,11 @@ export default {
     passwordTooShort: "La contraseña debe tener al menos 6 caracteres",
     loginFailed: "Inicio de sesión fallido. Por favor verifique sus credenciales.",
     registrationFailed: "Registro fallido. Por favor inténtelo de nuevo.",
-    progressLoaded: "Progreso cargado desde la nube"
+    progressLoaded: "Progreso cargado desde la nube",
+    welcome: "Bienvenido",
+    clickToSignOut: "Haga clic para cerrar sesión",
+    confirmSignOut: "¿Está seguro de que desea cerrar sesión?",
+    registrationSuccess: "¡Registro exitoso! Ahora ha iniciado sesión."
   },
   testing: {
     running: "Ejecutando pruebas...",

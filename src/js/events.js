@@ -576,6 +576,14 @@ function handleCanvasClick(event, gameInstance) {
                             // Open account dialog for login/registration
                             gameInstance.toggleAccountDialog();
                             break;
+
+                        case 'signOut':
+                            // Open account dialog when clicking on username or sign out text
+                            if (gameInstance.isUserAuthenticated) {
+                                // Instead of confirming sign out directly, open the account dialog
+                                gameInstance.toggleAccountDialog();
+                            }
+                            break;
                     }
                 }
             });
