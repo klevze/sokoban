@@ -23,8 +23,8 @@
             position: fixed;
             bottom: 150px;
             left: 20px;
-            width: 150px;
-            height: 150px;
+            width: 200px;  /* Slightly reduced width */
+            height: 200px;  /* Slightly reduced height */
             z-index: 1000;
             user-select: none;
             touch-action: none;
@@ -37,48 +37,62 @@
             display: block;
             opacity: 0.8;
         }
+
+        .controls-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
         
-        .arrowBtn {
+        .arrow-btn {
             position: absolute;
-            width: 50px;
-            height: 50px;
+            width: 42px;  /* Slightly smaller buttons */
+            height: 42px;  /* Slightly smaller buttons */
             background-color: rgba(50, 30, 20, 0.7);
             border: 2px solid rgba(255, 218, 185, 0.7);
-            border-radius: 50%;
+            border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
             color: #ffd700;
-            font-size: 24px;
+            font-size: 22px;  /* Slightly smaller font */
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
             -webkit-touch-callout: none;
         }
         
-        .arrowBtn.active {
+        .arrow-btn.active {
             background-color: rgba(80, 50, 30, 0.9);
             transform: scale(0.95);
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
         }
-        
-        #upButton {
-            top: 0;
-            left: 50px;
+
+        .arrow-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding-top:8px;
+            font-size: 26px;  /* Slightly smaller icons */
         }
         
-        #leftButton {
-            top: 50px;
-            left: 0;
+        .up-btn {
+            top: 20px;
         }
         
-        #rightButton {
-            top: 50px;
-            left: 100px;
+        .left-btn {
+          top:20px;
+          right:30px;
         }
         
-        #downButton {
-            top: 100px;
-            left: 50px;
+        .down-btn {
+          top:20px;
+        }
+        
+        .right-btn {
+          top:20px;
+          left:30px;
         }
         
         .drag-handle {

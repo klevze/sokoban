@@ -44,7 +44,14 @@ export function initEvents(gameInstance) {
     mainCanvas.addEventListener("touchend", function(event) {
         // Prevent default to avoid double actions
         event.preventDefault();
-        handleCanvasClick(event, gameInstance);
+        // Convert touch event to simulate a mouse click
+        const touch = event.changedTouches[0];
+        const simulatedEvent = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            preventDefault: () => event.preventDefault()
+        };
+        handleCanvasClick(simulatedEvent, gameInstance);
     });
     
     // Add mousemove listener to change cursor when over clickable elements
@@ -576,6 +583,14 @@ function handleCanvasClick(event, gameInstance) {
                             // Open account dialog for login/registration
                             gameInstance.toggleAccountDialog();
                             break;
+
+                        case 'signOut':
+                            // Open account dialog when clicking on username or sign out text
+                            if (gameInstance.isUserAuthenticated) {
+                                // Instead of confirming sign out directly, open the account dialog
+                                gameInstance.toggleAccountDialog();
+                            }
+                            break;
                     }
                 }
             });
@@ -871,7 +886,7 @@ export function showLevelSelectDialog(gameInstance) {
             levelRow.style.backgroundColor = 'rgba(70, 40, 20, 0.8)';
         }
 
-        // Add hover effects
+        // Add hover effects for mouse
         levelRow.onmouseover = () => {
             levelRow.style.backgroundColor = 'rgba(80, 50, 20, 0.8)';
             levelRow.style.transform = 'translateY(-2px)';
@@ -944,8 +959,8 @@ export function showLevelSelectDialog(gameInstance) {
         levelDetails.appendChild(bestResults);
         levelRow.appendChild(levelDetails);
         
-        // Click handler to load level
-        levelRow.onclick = () => {
+        // Function to handle level selection
+        const selectLevel = () => {
             // Prevent further click events while processing this one
             modal.style.pointerEvents = 'none';
             
@@ -967,6 +982,23 @@ export function showLevelSelectDialog(gameInstance) {
                 modal.style.pointerEvents = 'auto';
             }
         };
+        
+        // Click handler for mouse
+        levelRow.onclick = selectLevel;
+        
+        // Touch event handlers
+        levelRow.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            levelRow.style.backgroundColor = 'rgba(80, 50, 20, 0.8)';
+            levelRow.style.transform = 'translateY(-1px)';
+        });
+        
+        levelRow.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            levelRow.style.backgroundColor = i === gameInstance.currentLevel ? 'rgba(70, 40, 20, 0.8)' : 'rgba(50, 30, 20, 0.7)';
+            levelRow.style.transform = 'translateY(0)';
+            selectLevel(); // Execute the level selection
+        });
         
         levelsList.appendChild(levelRow);
     }
@@ -992,7 +1024,15 @@ export function showLevelSelectDialog(gameInstance) {
     backButton.style.minWidth = '120px'; // Slightly increased minimum width
     backButton.style.maxWidth = '250px'; // Increased maximum width for longer text
 
-    // Add hover effects
+    // Function to handle going back to game mode selection
+    const goBack = () => {
+        if (document.body.contains(modal)) {
+            document.body.removeChild(modal);
+        }
+        gameInstance.setState(GAME_STATES.GAME_MODE_SELECT);
+    };
+
+    // Hover effects for mouse
     backButton.onmouseover = () => {
         backButton.style.backgroundColor = '#7B5731';
         backButton.style.transform = 'translateY(-2px)';
@@ -1005,13 +1045,24 @@ export function showLevelSelectDialog(gameInstance) {
         backButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
     };
     
-    // Click handler to go back to game mode selection
-    backButton.onclick = () => {
-        if (document.body.contains(modal)) {
-            document.body.removeChild(modal);
-        }
-        gameInstance.setState(GAME_STATES.GAME_MODE_SELECT);
-    };
+    // Click handler for mouse
+    backButton.onclick = goBack;
+    
+    // Touch event handlers
+    backButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        backButton.style.backgroundColor = '#7B5731';
+        backButton.style.transform = 'translateY(1px)';
+        backButton.style.boxShadow = '0 1px 2px rgba(0,0,0,0.5)';
+    });
+    
+    backButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        backButton.style.backgroundColor = '#654321';
+        backButton.style.transform = 'translateY(0)';
+        backButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+        goBack(); // Execute the back function
+    });
     
     dialog.appendChild(backButton);
     modal.appendChild(dialog);
@@ -1328,7 +1379,7 @@ function showSettingsDialog(gameInstance) {
             button.textContent = icon || label;
         }
         
-        // Hover effects
+        // Hover effects for mouse
         button.onmouseover = () => {
             button.style.transform = 'translateY(-2px)';
             button.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
@@ -1341,7 +1392,7 @@ function showSettingsDialog(gameInstance) {
             button.style.backgroundColor = '#654321';
         };
         
-        // Active state
+        // Active state for mouse
         button.onmousedown = () => {
             button.style.transform = 'translateY(1px)';
             button.style.boxShadow = '0 1px 2px rgba(0,0,0,0.5)';
@@ -1352,7 +1403,23 @@ function showSettingsDialog(gameInstance) {
             button.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
         };
         
-        // Click handler
+        // Add touch event handlers
+        button.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            button.style.transform = 'translateY(1px)';
+            button.style.boxShadow = '0 1px 2px rgba(0,0,0,0.5)';
+            button.style.backgroundColor = '#755431';
+        });
+        
+        button.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            button.style.transform = 'translateY(0)';
+            button.style.boxShadow = '0 2px 4px rgba(0,0,0,0.4)';
+            button.style.backgroundColor = '#654321';
+            onClick(); // Execute the click handler on touch end
+        });
+        
+        // Click handler for mouse
         button.onclick = onClick;
         
         return button;

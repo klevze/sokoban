@@ -103,6 +103,10 @@ export default {
     passwordTooShort: "Geslo mora imeti vsaj 6 znakov",
     loginFailed: "Prijava ni uspela. Preverite svoje podatke.",
     registrationFailed: "Registracija ni uspela. Poskusite znova.",
-    progressLoaded: "Napredek naložen iz oblaka"
+    progressLoaded: "Napredek naložen iz oblaka",
+    welcome: "Dobrodošli",
+    clickToSignOut: "Kliknite za odjavo",
+    confirmSignOut: "Ali ste prepričani, da se želite odjaviti?",
+    registrationSuccess: "Registracija uspešna! Zdaj ste prijavljeni."
   }
 };
