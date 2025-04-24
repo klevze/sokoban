@@ -1491,6 +1491,9 @@ class Game {
                 // Store the levels data and initialize the first level
                 this.levelsData = data;
                 
+                // Validate that all levels have the same number of goals as boxes
+                this.validateLevelsBoxesAndGoals();
+                
                 // Set initial level data if not already set
                 if (!this.levelData && this.levelsData && this.levelsData.length > 0) {
                     this.levelData = JSON.parse(JSON.stringify(this.levelsData[0]));
@@ -1519,6 +1522,115 @@ class Game {
                 this.levelData = this.levelsData[0];
                 return this.levelsData;
             });
+    }
+
+    /**
+     * Validate that all levels have the same number of goals as boxes
+     * @private
+     */
+    validateLevelsBoxesAndGoals() {
+        if (!this.levelsData || !Array.isArray(this.levelsData)) {
+            throw new Error('Invalid levels data');
+        }
+
+        const problemLevels = [];
+
+        this.levelsData.forEach((level, index) => {
+            // Count the number of boxes and goals in each level
+            let numBoxes = 0;
+            let numGoals = 0;
+
+            // Parse the level data to find boxes and goals
+            // Each level has 3 layers in the data: base, goals, boxes
+            if (level.layers && Array.isArray(level.layers) && level.layers.length >= 3) {
+                // Layer 1 (index 1) contains goals
+                const goalLayer = level.layers[1].data;
+                // Layer 2 (index 2) contains boxes
+                const boxLayer = level.layers[2].data;
+
+                if (goalLayer && boxLayer) {
+                    // Count tiles > 0 in goal layer
+                    goalLayer.forEach(tile => {
+                        if (tile > 0) numGoals++;
+                    });
+
+                    // Count tiles > 0 in box layer (typically box is represented with tile ID 94)
+                    boxLayer.forEach(tile => {
+                        if (tile > 0) numBoxes++;
+                    });
+                }
+            }
+
+            // Check if boxes match goals for this level
+            if (numBoxes !== numGoals) {
+                problemLevels.push({
+                    level: index + 1,
+                    boxes: numBoxes,
+                    goals: numGoals
+                });
+                
+                console.warn(`Level ${index + 1} has mismatched boxes (${numBoxes}) and goals (${numGoals})`);
+            }
+        });
+
+        // Report any problematic levels
+        if (problemLevels.length > 0) {
+            console.error('The following levels have mismatched boxes and goals:', problemLevels);
+            
+            // Create a warning message that will be shown to the user
+            const warningMsg = document.createElement('div');
+            warningMsg.id = 'level-validation-warning';
+            warningMsg.style.position = 'fixed';
+            warningMsg.style.top = '10px';
+            warningMsg.style.left = '50%';
+            warningMsg.style.transform = 'translateX(-50%)';
+            warningMsg.style.backgroundColor = 'rgba(255, 50, 50, 0.9)';
+            warningMsg.style.color = 'white';
+            warningMsg.style.padding = '10px 20px';
+            warningMsg.style.borderRadius = '5px';
+            warningMsg.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+            warningMsg.style.zIndex = '1000';
+            warningMsg.style.fontFamily = 'Arial, sans-serif';
+            warningMsg.style.fontSize = '14px';
+            warningMsg.style.fontWeight = 'bold';
+            
+            if (problemLevels.length === 1) {
+                const level = problemLevels[0];
+                warningMsg.textContent = `Warning: Level ${level.level} has ${level.boxes} boxes but ${level.goals} goals. Level may be unsolvable.`;
+            } else {
+                warningMsg.textContent = `Warning: ${problemLevels.length} levels have mismatched boxes and goals. These levels may be unsolvable.`;
+            }
+            
+            // Add a close button
+            const closeButton = document.createElement('span');
+            closeButton.textContent = '×';
+            closeButton.style.marginLeft = '10px';
+            closeButton.style.cursor = 'pointer';
+            closeButton.style.fontWeight = 'bold';
+            closeButton.style.fontSize = '18px';
+            closeButton.onclick = () => {
+                if (document.body.contains(warningMsg)) {
+                    document.body.removeChild(warningMsg);
+                }
+            };
+            warningMsg.appendChild(closeButton);
+            
+            // Add to the document
+            document.body.appendChild(warningMsg);
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (document.body.contains(warningMsg)) {
+                    warningMsg.style.opacity = '0';
+                    warningMsg.style.transition = 'opacity 1s';
+                    setTimeout(() => {
+                        if (document.body.contains(warningMsg)) {
+                            document.body.removeChild(warningMsg);
+                        }
+                    }, 1000);
+                }
+            }, 10000);
+        }
     }
 
     /**
