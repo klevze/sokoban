@@ -204,6 +204,10 @@ export class Boxes {
         box.x = toX;
         box.y = toY;
         
+        // Also update the pixel position to match the grid position
+        box.pixelPos.x = toX;
+        box.pixelPos.y = toY;
+        
         // Check if box is now on a goal and update its appearance
         this.updateBoxState(box, toX, toY);
         

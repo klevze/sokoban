@@ -1642,7 +1642,7 @@ function handleTopActionButtonClick(event, gameInstance) {
                 case 'undo':
                     console.log('Undo button clicked');
                     if (gameInstance.player) {
-                        gameInstance.player.undoMove();
+                        gameInstance.player.undo();
                     }
                     break;
                 
