@@ -111,7 +111,7 @@ export const ASSET_PATHS = relativizeAssetPaths({
   IMAGES: {
     PLAYER: '/assets/images/players.png',
     TILES: '/assets/images/tileset_96x96px.png', // Updated to use the new 96x96 tileset
-    LOGO: '/assets/images/logo.webp',
+    LOGO: '/assets/images/logo.svg',
     MAIN_BG: '/assets/images/main.webp',
     BTN_PLAY: '/assets/images/btn_play.png',
     WOOD_PANEL: '/assets/images/wood_panel.webp',

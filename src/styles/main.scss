@@ -96,20 +96,23 @@ $breakpoint-tablet: 900px;
 // ==========================================================================
 
 // General body styling
-body {
+html, body {
   background: $background-color;
-  text-align: center;
   margin: 0;
   padding: 0;
-  height: 100vh;
+  height: 100%;
+  width: 100%;
   overflow: hidden;
-  @include flex-center;
   font-family: $font-primary;
   font-size: $font-size-base;
   color: $text-color;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @include flex-center;
 }
 
 // ==========================================================================
@@ -120,19 +123,20 @@ body {
 #mainContent {
   position: relative;
   width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
 
 // Main canvas styling
 #mainCanvas {
-  border: solid 1px $border-color;
-  @include box-shadow(1px 1px 10px 10px $border-color);
-  border-radius: 1rem;
-  background: $canvas-background;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 960px;
-  max-height: 100vh;
+  height: 100%;
   display: block;
   // Using the standard property with fallbacks for cross-browser support
   image-rendering: -webkit-optimize-contrast; // Chrome specific

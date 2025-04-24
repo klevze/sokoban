@@ -174,28 +174,33 @@ export function hideLoadingText() {
 
 function setupTouchControls(gameInstance) {
     const mainCanvas = document.getElementById("mainCanvas");
+    const virtualArrows = document.getElementById('virtualArrows');
+    
+    // Get the arrow buttons
     const upButton = document.getElementById('upButton');
     const leftButton = document.getElementById('leftButton');
     const rightButton = document.getElementById('rightButton');
     const downButton = document.getElementById('downButton');
-    const virtualArrows = document.getElementById('virtualArrows');
     const dragHandle = virtualArrows ? virtualArrows.querySelector('.drag-handle') : null;
     
-    // Initial setup for mobile devices only - keep hidden otherwise
-    if (virtualArrows) {
-        if (gameInstance.isMobileDevice()) {
-            // Only initialize arrows on mobile devices
-            updateArrowsVisibility(gameInstance.state);
-            
-            // Make the virtualArrows draggable
-            makeDraggable(virtualArrows, dragHandle);
-            
-            // Try to load position from localStorage
-            loadArrowPosition(virtualArrows);
-        } else {
-            // Ensure arrows remain hidden on desktop
-            virtualArrows.style.display = 'none';
-        }
+    // Only show arrows on mobile devices
+    if (virtualArrows && gameInstance.isMobileDevice()) {
+        // Make sure the arrows are visible for mobile devices
+        virtualArrows.style.display = 'block';
+        
+        // Set initial position (to avoid default position being off-screen)
+        virtualArrows.style.position = 'fixed';
+        virtualArrows.style.bottom = '150px';
+        virtualArrows.style.left = '20px';
+        
+        // Make the controls draggable
+        makeDraggable(virtualArrows, dragHandle);
+        
+        // Try to load position from localStorage
+        loadArrowPosition(virtualArrows);
+        
+        // Update visibility based on game state
+        updateArrowsVisibility(gameInstance.state);
     }
     
     // Set up continuous movement handling
@@ -204,20 +209,13 @@ function setupTouchControls(gameInstance) {
     
     // Function to update visibility of arrows based on game state
     function updateArrowsVisibility(state) {
-        if (virtualArrows) {
-            // Only show arrows during active gameplay
-            if (state === GAME_STATES.PLAY) {
-                virtualArrows.style.display = 'block';
-                virtualArrows.style.opacity = '1';
-            } else {
-                virtualArrows.style.opacity = '0';
-                // Use a timeout to hide completely after fade out
-                setTimeout(() => {
-                    if (gameInstance.state !== GAME_STATES.PLAY) {
-                        virtualArrows.style.display = 'none';
-                    }
-                }, 300);
-            }
+        if (!virtualArrows || !gameInstance.isMobileDevice()) return;
+        
+        // Only show arrows during active gameplay
+        if (state === GAME_STATES.PLAY) {
+            virtualArrows.classList.add('visible');
+        } else {
+            virtualArrows.classList.remove('visible');
         }
     }
     
@@ -256,7 +254,7 @@ function setupTouchControls(gameInstance) {
     // Function to execute the movement in the given direction
     function executeMovement(direction) {
         if (gameInstance.player && !gameInstance.player.isMoving && 
-            gameInstance.state === GAME_STATES.PLAY && gameInstance.canProcessKeyPress()) {
+            gameInstance.state === GAME_STATES.PLAY) {
             switch(direction) {
                 case 'up': gameInstance.player.move(0, -1); break;
                 case 'left': gameInstance.player.move(-1, 0); break;
@@ -274,7 +272,21 @@ function setupTouchControls(gameInstance) {
             startContinuousMovement('up');
         });
         
-        upButton.addEventListener('touchend', () => {
+        upButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            upButton.classList.remove('active');
+            stopContinuousMovement();
+        });
+        
+        // Also add mouse events for testing on desktop
+        upButton.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            upButton.classList.add('active');
+            startContinuousMovement('up');
+        });
+        
+        upButton.addEventListener('mouseup', (e) => {
+            e.preventDefault();
             upButton.classList.remove('active');
             stopContinuousMovement();
         });
@@ -287,7 +299,21 @@ function setupTouchControls(gameInstance) {
             startContinuousMovement('left');
         });
         
-        leftButton.addEventListener('touchend', () => {
+        leftButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            leftButton.classList.remove('active');
+            stopContinuousMovement();
+        });
+        
+        // Also add mouse events for testing on desktop
+        leftButton.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            leftButton.classList.add('active');
+            startContinuousMovement('left');
+        });
+        
+        leftButton.addEventListener('mouseup', (e) => {
+            e.preventDefault();
             leftButton.classList.remove('active');
             stopContinuousMovement();
         });
@@ -300,7 +326,21 @@ function setupTouchControls(gameInstance) {
             startContinuousMovement('right');
         });
         
-        rightButton.addEventListener('touchend', () => {
+        rightButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            rightButton.classList.remove('active');
+            stopContinuousMovement();
+        });
+        
+        // Also add mouse events for testing on desktop
+        rightButton.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            rightButton.classList.add('active');
+            startContinuousMovement('right');
+        });
+        
+        rightButton.addEventListener('mouseup', (e) => {
+            e.preventDefault();
             rightButton.classList.remove('active');
             stopContinuousMovement();
         });
@@ -313,174 +353,49 @@ function setupTouchControls(gameInstance) {
             startContinuousMovement('down');
         });
         
-        downButton.addEventListener('touchend', () => {
+        downButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            downButton.classList.remove('active');
+            stopContinuousMovement();
+        });
+        
+        // Also add mouse events for testing on desktop
+        downButton.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            downButton.classList.add('active');
+            startContinuousMovement('down');
+        });
+        
+        downButton.addEventListener('mouseup', (e) => {
+            e.preventDefault();
             downButton.classList.remove('active');
             stopContinuousMovement();
         });
     }
     
-    // Make sure to stop continuous movement if we leave the game area
-    mainCanvas.addEventListener('touchstart', stopContinuousMovement);
+    // Make sure to stop continuous movement if the pointer leaves the button area
+    document.addEventListener('touchcancel', stopContinuousMovement);
+    document.addEventListener('mouseleave', stopContinuousMovement);
     
-    // Create game control buttons container
-    const controlsContainer = document.createElement('div');
-    controlsContainer.id = 'game-controls';
-    controlsContainer.style.position = 'absolute';
-    controlsContainer.style.top = '20px';
-    controlsContainer.style.left = '50%';
-    controlsContainer.style.transform = 'translateX(-50%)';
-    controlsContainer.style.display = 'flex';
-    controlsContainer.style.gap = '15px';
-    controlsContainer.style.zIndex = '100';
-    controlsContainer.style.opacity = '0'; // Start hidden
-    controlsContainer.style.transition = 'opacity 0.3s';
-    
-    // Ensure resources are loaded before accessing images
-    if (!gameInstance.resources || !gameInstance.resources.images) {
-        console.warn('Game resources not fully loaded yet');
-        return;
-    }
-    
-    // Add undo button using image asset
-    const undoButton = document.createElement('button');
-    undoButton.id = 'undo-button';
-    undoButton.title = gameInstance.resources.i18n.get('buttons.undo') || 'Undo Move';
-    
-    // Check if the UNDO image is loaded
-    if (gameInstance.resources.images.ACTION_UNDO && gameInstance.resources.images.ACTION_UNDO.image) {
-        const undoImage = new Image();
-        undoImage.src = gameInstance.resources.images.ACTION_UNDO.image.src;
-        undoImage.alt = 'Undo';
-        undoImage.style.width = '100%';
-        undoImage.style.height = '100%';
-        undoImage.style.objectFit = 'contain';
-        undoButton.appendChild(undoImage);
-    } else {
-        undoButton.textContent = '↩️';
-        console.warn('ACTION_UNDO image not loaded');
-    }
-    
-    undoButton.style.padding = '6px';
-    undoButton.style.backgroundColor = 'transparent';
-    undoButton.style.border = 'none';
-    undoButton.style.borderRadius = '50%';
-    undoButton.style.cursor = 'pointer';
-    undoButton.style.width = '48px';
-    undoButton.style.height = '48px';
-    
-    undoButton.addEventListener('click', () => {
-        if (gameInstance.player && gameInstance.state === GAME_STATES.PLAY) {
-            gameInstance.player.undo();
-        }
-    });
-    
-    // Add settings button using image asset
-    const settingsButton = document.createElement('button');
-    settingsButton.id = 'settings-button';
-    settingsButton.title = gameInstance.resources.i18n.get('buttons.settings') || 'Settings';
-    
-    // Check if the SETTINGS image is loaded
-    if (gameInstance.resources.images.ACTION_SETTINGS && gameInstance.resources.images.ACTION_SETTINGS.image) {
-        const settingsImage = new Image();
-        settingsImage.src = gameInstance.resources.images.ACTION_SETTINGS.image.src;
-        settingsImage.alt = 'Settings';
-        settingsImage.style.width = '100%';
-        settingsImage.style.height = '100%';
-        settingsImage.style.objectFit = 'contain';
-        settingsButton.appendChild(settingsImage);
-    } else {
-        settingsButton.textContent = '⚙️';
-        console.warn('ACTION_SETTINGS image not loaded');
-    }
-    
-    settingsButton.style.padding = '6px';
-    settingsButton.style.backgroundColor = 'transparent';
-    settingsButton.style.border = 'none';
-    settingsButton.style.borderRadius = '50%';
-    settingsButton.style.cursor = 'pointer';
-    settingsButton.style.width = '48px';
-    settingsButton.style.height = '48px';
-    
-    settingsButton.addEventListener('click', () => {
-        if (gameInstance.state === GAME_STATES.PLAY) {
-            // Pause game timer while in settings
-            gameInstance.score.pauseTimer();
-            showSettingsDialog(gameInstance);
-        }
-    });
-    
-    // Add pause button using image asset
-    const pauseButton = document.createElement('button');
-    pauseButton.id = 'pause-button';
-    pauseButton.title = gameInstance.resources.i18n.get('buttons.pauseGame');
-    
-    // Check if the PAUSE image is loaded
-    if (gameInstance.resources.images.ACTION_PAUSE && gameInstance.resources.images.ACTION_PAUSE.image) {
-        const pauseImage = new Image();
-        pauseImage.src = gameInstance.resources.images.ACTION_PAUSE.image.src;
-        pauseImage.alt = 'Pause';
-        pauseImage.style.width = '100%';
-        pauseImage.style.height = '100%';
-        pauseImage.style.objectFit = 'contain';
-        pauseButton.appendChild(pauseImage);
-    } else {
-        pauseButton.textContent = '⏸️';
-        console.warn('ACTION_PAUSE image not loaded');
-    }
-    
-    pauseButton.style.padding = '6px';
-    pauseButton.style.backgroundColor = 'transparent';
-    pauseButton.style.border = 'none';
-    pauseButton.style.borderRadius = '50%';
-    pauseButton.style.cursor = 'pointer';
-    pauseButton.style.width = '48px';
-    pauseButton.style.height = '48px';
-    
-    pauseButton.addEventListener('click', () => {
-        gameInstance.togglePause();
-    });
-    
-    // Add buttons to container
-    controlsContainer.appendChild(undoButton);
-    controlsContainer.appendChild(pauseButton);
-    controlsContainer.appendChild(settingsButton);
-    
-    // Add to the document
-    const mainContent = document.getElementById('mainContent');
-    if (mainContent) {
-        mainContent.appendChild(controlsContainer);
-    } else {
-        console.warn('Could not find mainContent element');
-        document.body.appendChild(controlsContainer);
-    }
-    
-    // Set up state change observer to show/hide buttons and arrows
+    // Set up state change observer to show/hide arrow controls
     const originalSetState = gameInstance.setState;
     gameInstance.setState = function(newState) {
         const result = originalSetState.call(this, newState);
-        
-        // Show controls only in PLAY state
-        if (newState === GAME_STATES.PLAY) {
-            controlsContainer.style.opacity = '1';
-            // Show virtual arrows in PLAY state
-            updateArrowsVisibility(newState);
-        } else {
-            controlsContainer.style.opacity = '0';
-            // Hide virtual arrows in other states
-            updateArrowsVisibility(newState);
-        }
-        
+        updateArrowsVisibility(newState);
         return result;
     };
     
     // Add touch event for game state transitions (loading, intro, win screens)
     mainCanvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        const gameState = gameInstance.state;
-        if (gameState === GAME_STATES.LOADING || gameState === GAME_STATES.INTRO || gameState === GAME_STATES.WIN) {
+        // Only process canvas touches if they're not on the virtual arrows
+        if (!virtualArrows.contains(e.target)) {
+            e.preventDefault();
             handleCanvasClick(e, gameInstance);
         }
     });
+    
+    // Initialize visibility based on current state
+    updateArrowsVisibility(gameInstance.state);
 }
 
 /**
@@ -615,43 +530,50 @@ function loadArrowPosition(element) {
 }
 
 function handleCanvasClick(event, gameInstance) {
-    const mainCanvas = document.getElementById("mainCanvas");
-    const ctx = mainCanvas.getContext("2d");
-    
-    // Get click/touch coordinates relative to canvas
     const rect = mainCanvas.getBoundingClientRect();
-    const clientX = event.clientX || (event.touches && event.touches[0].clientX);
-    const clientY = event.clientY || (event.touches && event.touches[0].clientY);
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
     
-    if (!clientX || !clientY) return;
-    
-    const mouseX = clientX - rect.left;
-    const mouseY = clientY - rect.top;
+    // Check if any of the top action buttons was clicked when in play state
+    if (gameInstance.state === GAME_STATES.PLAY && gameInstance.topButtonAreas) {
+        // Call the top action button handler first
+        const buttonClicked = handleTopActionButtonClick(event, gameInstance);
+        
+        // If a button was clicked, stop processing further
+        if (buttonClicked) {
+            return;
+        }
+    }
     
     if (gameInstance.state === GAME_STATES.LOADING) {
         gameInstance.setState(GAME_STATES.INTRO);
     } else if (gameInstance.state === GAME_STATES.INTRO) {
-        // Check if play button was clicked
-        const btnPlayImg = gameInstance.resources.images.btnPlay.image;
-        const btnX = mainCanvas.width / 2 - btnPlayImg.width / 2;
-        const btnY = mainCanvas.height * 0.7; // Use the same dynamic position as in showIntroScreen
-        
-        const btnWidth = btnPlayImg.width;
-        const btnHeight = btnPlayImg.height;
-        
-        if (mouseX >= btnX && mouseX <= btnX + btnWidth && mouseY >= btnY && mouseY <= btnY + btnHeight) {
-            // Stop all sounds including music when starting a new game
-            gameInstance.resources.stopAllSounds(true);
-            
-            // Transition to game mode selection screen instead of directly starting the game
-            gameInstance.setState(GAME_STATES.GAME_MODE_SELECT);
-        }
-        
-        // Check if level editor button was clicked
-        const editorY = btnY + btnPlayImg.height + 20;
-        if (mouseX >= btnX && mouseX <= btnX + btnWidth && mouseY >= editorY && mouseY <= editorY + btnHeight) {
-            // Open the level editor
-            gameInstance.openLevelEditor();
+        // Check if any button area was clicked using the buttonAreas object
+        if (gameInstance.buttonAreas) {
+            Object.entries(gameInstance.buttonAreas).forEach(([key, area]) => {
+                if (mouseX >= area.x && mouseX <= area.x + area.width &&
+                    mouseY >= area.y && mouseY <= area.y + area.height) {
+                    
+                    switch (key) {
+                        case 'play':
+                            // Stop all sounds including music when starting a new game
+                            gameInstance.resources.stopAllSounds(true);
+                            // Transition to game mode selection screen
+                            gameInstance.setState(GAME_STATES.GAME_MODE_SELECT);
+                            break;
+                            
+                        case 'editor':
+                            // Open level editor
+                            gameInstance.openLevelEditor();
+                            break;
+                            
+                        case 'login':
+                            // Open account dialog for login/registration
+                            gameInstance.toggleAccountDialog();
+                            break;
+                    }
+                }
+            });
         }
     } else if (gameInstance.state === GAME_STATES.WIN) {
         // Handle clicks on win screen (advance to next level)
@@ -1612,4 +1534,51 @@ function handleGameModeSelectionClick(e, gameInstance) {
             }
         }
     });
+}
+
+// Add a function to handle top action button clicks
+function handleTopActionButtonClick(event, gameInstance) {
+    const rect = gameInstance.canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    // Check if any of the top action buttons was clicked
+    let buttonClicked = false;
+    
+    Object.entries(gameInstance.topButtonAreas || {}).forEach(([key, area]) => {
+        if (mouseX >= area.x && mouseX <= area.x + area.width &&
+            mouseY >= area.y && mouseY <= area.y + area.height) {
+            
+            buttonClicked = true;
+            
+            // Visual feedback for button click
+            gameInstance.ctx.save();
+            gameInstance.ctx.globalAlpha = 0.3;
+            gameInstance.ctx.fillStyle = '#ffffff';
+            gameInstance.ctx.fillRect(area.x, area.y, area.width, area.height);
+            gameInstance.ctx.restore();
+            
+            // Handle button click based on the button key
+            switch (key) {
+                case 'pause':
+                    console.log('Pause button clicked');
+                    gameInstance.togglePause();
+                    break;
+                
+                case 'undo':
+                    console.log('Undo button clicked');
+                    if (gameInstance.player) {
+                        gameInstance.player.undoMove();
+                    }
+                    break;
+                
+                case 'settings':
+                    console.log('Settings button clicked');
+                    showSettingsDialog(gameInstance);
+                    break;
+            }
+        }
+    });
+    
+    return buttonClicked; // Return whether a button was clicked
 }

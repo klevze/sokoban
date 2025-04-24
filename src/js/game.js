@@ -29,15 +29,14 @@ class Game {
         // Canvas and rendering
         this.canvas = canvas;
         
-        // Set canvas dimensions from config (both attribute and actual size)
-        this.canvas.width = CANVAS.WIDTH;
-        this.canvas.height = CANVAS.HEIGHT;
+        // Use the width and height already set in main.js
+        // (The canvas is now full-screen)
         
         this.ctx = canvas.getContext('2d');
         
         // Game components
         this.resources = new Resources();
-        this.stars3d = new Stars3D(this.ctx, CANVAS.WIDTH, CANVAS.HEIGHT, 130, 2, 64);
+        this.stars3d = new Stars3D(this.ctx, canvas.width, canvas.height, 130, 2, 64);
         
         // Game objects (initialized in setupGame)
         this.player = null;
@@ -47,12 +46,12 @@ class Game {
         this.score = null;
         this.editor = null;
         
+        // Top action buttons clickable areas
+        this.topButtonAreas = {};
+        
         // Level management
         this.levelsData = null;
         this.levelData = null;
-        this.currentLevel = 0;
-        this.isCustomLevel = false;
-        
         // Input handling
         this.lastKeyPressTime = 0;
         this.keyThrottleDelay = PHYSICS.KEY_THROTTLE_DELAY;
@@ -242,6 +241,461 @@ class Game {
     }
 
     /**
+     * Show login dialog
+     */
+    showLoginDialog() {
+        // Create dialog overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'dialog-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.zIndex = '1000';
+        
+        // Create dialog container
+        const dialog = document.createElement('div');
+        dialog.className = 'login-dialog';
+        
+        // Use wood background like other dialogs
+        dialog.style.backgroundImage = 'url(assets/images/background_levels_wood.png)';
+        dialog.style.backgroundSize = 'cover';
+        dialog.style.backgroundPosition = 'center';
+        dialog.style.border = '8px solid #3a2214';
+        dialog.style.borderRadius = '8px';
+        dialog.style.padding = '20px';
+        dialog.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
+        dialog.style.maxWidth = '400px';
+        dialog.style.width = '90%';
+        dialog.style.position = 'relative';
+        
+        // Add texture overlay for more wood-like feel
+        const textureOverlay = document.createElement('div');
+        textureOverlay.style.position = 'absolute';
+        textureOverlay.style.top = '0';
+        textureOverlay.style.left = '0';
+        textureOverlay.style.width = '100%';
+        textureOverlay.style.height = '100%';
+        textureOverlay.style.opacity = '0.05';
+        textureOverlay.style.pointerEvents = 'none';
+        dialog.appendChild(textureOverlay);
+        
+        // Create dialog header
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.marginBottom = '20px';
+        header.style.position = 'relative';
+        header.style.zIndex = '1';
+        
+        const title = document.createElement('h2');
+        title.textContent = this.resources.i18n.get('auth.signIn');
+        title.style.margin = '0';
+        title.style.color = '#faf0dc';
+        title.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+        
+        const closeButton = document.createElement('button');
+        closeButton.innerHTML = '&times;';
+        closeButton.style.backgroundColor = 'rgba(150, 80, 30, 0.7)';
+        closeButton.style.border = '2px solid #fbefd5';
+        closeButton.style.borderRadius = '50%';
+        closeButton.style.color = '#faf0dc';
+        closeButton.style.fontSize = '20px';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.width = '30px';
+        closeButton.style.height = '30px';
+        closeButton.style.display = 'flex';
+        closeButton.style.justifyContent = 'center';
+        closeButton.style.alignItems = 'center';
+        closeButton.style.padding = '0';
+        closeButton.style.lineHeight = '0'; 
+        closeButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.5)';
+        
+        // Hover effect for close button
+        closeButton.onmouseover = () => {
+            closeButton.style.background = 'rgba(180, 100, 40, 0.9)';
+            closeButton.style.transform = 'scale(1.05)';
+        };
+        closeButton.onmouseout = () => {
+            closeButton.style.background = 'rgba(150, 80, 30, 0.7)';
+            closeButton.style.transform = 'scale(1)';
+        };
+        closeButton.onclick = () => document.body.removeChild(overlay);
+        
+        header.appendChild(title);
+        header.appendChild(closeButton);
+        dialog.appendChild(header);
+        
+        // Create content container
+        const contentContainer = document.createElement('div');
+        contentContainer.style.position = 'relative';
+        contentContainer.style.zIndex = '1';
+        
+        // Create login form
+        const loginForm = document.createElement('form');
+        loginForm.id = 'login-form';
+        loginForm.style.display = 'block';
+        
+        const loginEmail = this._createFormField('email', 'auth.email', 'email');
+        const loginPassword = this._createFormField('password', 'auth.password', 'password');
+        
+        const loginSubmit = document.createElement('button');
+        loginSubmit.type = 'submit';
+        loginSubmit.textContent = this.resources.i18n.get('auth.signIn');
+        loginSubmit.style.padding = '8px 15px';
+        loginSubmit.style.height = '40px';
+        loginSubmit.style.backgroundColor = '#8b673c';
+        loginSubmit.style.color = 'white';
+        loginSubmit.style.border = 'none';
+        loginSubmit.style.borderRadius = '4px';
+        loginSubmit.style.cursor = 'pointer';
+        loginSubmit.style.fontSize = '16px';
+        loginSubmit.style.width = '100%';
+        loginSubmit.style.marginTop = '10px';
+        loginSubmit.style.boxSizing = 'border-box';
+        loginSubmit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        
+        // Button hover effects
+        loginSubmit.onmouseover = () => {
+            loginSubmit.style.backgroundColor = '#9b774c';
+            loginSubmit.style.transform = 'translateY(-2px)';
+            loginSubmit.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+        };
+        
+        loginSubmit.onmouseout = () => {
+            loginSubmit.style.backgroundColor = '#8b673c';
+            loginSubmit.style.transform = 'translateY(0)';
+            loginSubmit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        };
+        
+        loginForm.appendChild(loginEmail);
+        loginForm.appendChild(loginPassword);
+        loginForm.appendChild(loginSubmit);
+        contentContainer.appendChild(loginForm);
+        
+        // Create error message display
+        const errorDisplay = document.createElement('div');
+        errorDisplay.id = 'auth-error';
+        errorDisplay.style.color = '#ff6b6b';
+        errorDisplay.style.marginTop = '10px';
+        errorDisplay.style.fontSize = '14px';
+        errorDisplay.style.display = 'none';
+        errorDisplay.style.padding = '5px 10px';
+        errorDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+        errorDisplay.style.borderRadius = '4px';
+        contentContainer.appendChild(errorDisplay);
+        
+        // Add "Register instead" link
+        const registerLink = document.createElement('div');
+        registerLink.style.marginTop = '15px';
+        registerLink.style.textAlign = 'center';
+        registerLink.style.fontSize = '14px';
+        registerLink.style.color = '#faf0dc';
+        
+        const registerText = document.createElement('span');
+        registerText.textContent = "Don't have an account? ";
+        
+        const registerAction = document.createElement('a');
+        registerAction.textContent = 'Register here';
+        registerAction.href = '#';
+        registerAction.style.color = '#ffaa00';
+        registerAction.style.textDecoration = 'underline';
+        registerAction.style.cursor = 'pointer';
+        
+        registerAction.onclick = (e) => {
+            e.preventDefault();
+            document.body.removeChild(overlay);
+            this.showRegistrationDialog();
+        };
+        
+        registerLink.appendChild(registerText);
+        registerLink.appendChild(registerAction);
+        contentContainer.appendChild(registerLink);
+        
+        dialog.appendChild(contentContainer);
+        
+        // Add event listeners for form
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = loginForm.email.value.trim();
+            const password = loginForm.password.value;
+            
+            if (!email || !password) {
+                this._showAuthError(dialog, this.resources.i18n.get('auth.fillAllFields'));
+                return;
+            }
+            
+            try {
+                loginSubmit.disabled = true;
+                loginSubmit.textContent = this.resources.i18n.get('auth.signingIn');
+                loginSubmit.style.backgroundColor = '#7b572c';
+                
+                await userManager.signIn(email, password);
+                document.body.removeChild(overlay);
+            } catch (error) {
+                console.error('Login error:', error);
+                // Show the actual error message instead of a generic one
+                this._showAuthError(dialog, error.message || this.resources.i18n.get('auth.loginFailed'));
+                
+                loginSubmit.disabled = false;
+                loginSubmit.textContent = this.resources.i18n.get('auth.signIn');
+                loginSubmit.style.backgroundColor = '#8b673c';
+            }
+        });
+        
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+    }
+    
+    /**
+     * Show registration dialog
+     */
+    showRegistrationDialog() {
+        // Create dialog overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'dialog-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.zIndex = '1000';
+        
+        // Create dialog container
+        const dialog = document.createElement('div');
+        dialog.className = 'register-dialog';
+        
+        // Use wood background like other dialogs
+        dialog.style.backgroundImage = 'url(assets/images/background_levels_wood.png)';
+        dialog.style.backgroundSize = 'cover';
+        dialog.style.backgroundPosition = 'center';
+        dialog.style.border = '8px solid #3a2214';
+        dialog.style.borderRadius = '8px';
+        dialog.style.padding = '20px';
+        dialog.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
+        dialog.style.maxWidth = '400px';
+        dialog.style.width = '90%';
+        dialog.style.position = 'relative';
+        
+        // Add texture overlay for more wood-like feel
+        const textureOverlay = document.createElement('div');
+        textureOverlay.style.position = 'absolute';
+        textureOverlay.style.top = '0';
+        textureOverlay.style.left = '0';
+        textureOverlay.style.width = '100%';
+        textureOverlay.style.height = '100%';
+        textureOverlay.style.opacity = '0.05';
+        textureOverlay.style.pointerEvents = 'none';
+        dialog.appendChild(textureOverlay);
+        
+        // Create dialog header
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.marginBottom = '20px';
+        header.style.position = 'relative';
+        header.style.zIndex = '1';
+        
+        const title = document.createElement('h2');
+        title.textContent = this.resources.i18n.get('auth.register');
+        title.style.margin = '0';
+        title.style.color = '#faf0dc';
+        title.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+        
+        const closeButton = document.createElement('button');
+        closeButton.innerHTML = '&times;';
+        closeButton.style.backgroundColor = 'rgba(150, 80, 30, 0.7)';
+        closeButton.style.border = '2px solid #fbefd5';
+        closeButton.style.borderRadius = '50%';
+        closeButton.style.color = '#faf0dc';
+        closeButton.style.fontSize = '20px';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.width = '30px';
+        closeButton.style.height = '30px';
+        closeButton.style.display = 'flex';
+        closeButton.style.justifyContent = 'center';
+        closeButton.style.alignItems = 'center';
+        closeButton.style.padding = '0';
+        closeButton.style.lineHeight = '0';
+        closeButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.5)';
+        
+        // Hover effect for close button
+        closeButton.onmouseover = () => {
+            closeButton.style.background = 'rgba(180, 100, 40, 0.9)';
+            closeButton.style.transform = 'scale(1.05)';
+        };
+        closeButton.onmouseout = () => {
+            closeButton.style.background = 'rgba(150, 80, 30, 0.7)';
+            closeButton.style.transform = 'scale(1)';
+        };
+        closeButton.onclick = () => document.body.removeChild(overlay);
+        
+        header.appendChild(title);
+        header.appendChild(closeButton);
+        dialog.appendChild(header);
+        
+        // Create content container
+        const contentContainer = document.createElement('div');
+        contentContainer.style.position = 'relative';
+        contentContainer.style.zIndex = '1';
+        
+        // Create register form
+        const registerForm = document.createElement('form');
+        registerForm.id = 'register-form';
+        
+        const registerName = this._createFormField('text', 'auth.name', 'displayName');
+        // Update field style to match wood theme
+        this._updateFieldStyle(registerName);
+        
+        const registerEmail = this._createFormField('email', 'auth.email', 'email');
+        // Update field style to match wood theme
+        this._updateFieldStyle(registerEmail);
+        
+        const registerPassword = this._createFormField('password', 'auth.password', 'password');
+        // Update field style to match wood theme
+        this._updateFieldStyle(registerPassword);
+        
+        const registerConfirmPassword = this._createFormField('password', 'auth.confirmPassword', 'confirmPassword');
+        // Update field style to match wood theme
+        this._updateFieldStyle(registerConfirmPassword);
+        
+        const registerSubmit = document.createElement('button');
+        registerSubmit.type = 'submit';
+        registerSubmit.textContent = this.resources.i18n.get('auth.register');
+        registerSubmit.style.padding = '8px 15px';
+        registerSubmit.style.height = '40px';
+        registerSubmit.style.backgroundColor = '#8b673c';
+        registerSubmit.style.color = 'white';
+        registerSubmit.style.border = 'none';
+        registerSubmit.style.borderRadius = '4px';
+        registerSubmit.style.cursor = 'pointer';
+        registerSubmit.style.fontSize = '16px';
+        registerSubmit.style.width = '100%';
+        registerSubmit.style.marginTop = '10px';
+        registerSubmit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        registerSubmit.style.boxSizing = 'border-box';
+        
+        // Button hover effects
+        registerSubmit.onmouseover = () => {
+            registerSubmit.style.backgroundColor = '#9b774c';
+            registerSubmit.style.transform = 'translateY(-2px)';
+            registerSubmit.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+        };
+        
+        registerSubmit.onmouseout = () => {
+            registerSubmit.style.backgroundColor = '#8b673c';
+            registerSubmit.style.transform = 'translateY(0)';
+            registerSubmit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        };
+        
+        registerForm.appendChild(registerName);
+        registerForm.appendChild(registerEmail);
+        registerForm.appendChild(registerPassword);
+        registerForm.appendChild(registerConfirmPassword);
+        registerForm.appendChild(registerSubmit);
+        contentContainer.appendChild(registerForm);
+        
+        // Create error message display
+        const errorDisplay = document.createElement('div');
+        errorDisplay.id = 'auth-error';
+        errorDisplay.style.color = '#ff6b6b';
+        errorDisplay.style.marginTop = '10px';
+        errorDisplay.style.fontSize = '14px';
+        errorDisplay.style.display = 'none';
+        errorDisplay.style.padding = '5px 10px';
+        errorDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+        errorDisplay.style.borderRadius = '4px';
+        contentContainer.appendChild(errorDisplay);
+        
+        // Add "Login instead" link
+        const loginLink = document.createElement('div');
+        loginLink.style.marginTop = '15px';
+        loginLink.style.textAlign = 'center';
+        loginLink.style.fontSize = '14px';
+        loginLink.style.color = '#faf0dc';
+        
+        const loginText = document.createElement('span');
+        loginText.textContent = "Already have an account? ";
+        
+        const loginAction = document.createElement('a');
+        loginAction.textContent = 'Sign in here';
+        loginAction.href = '#';
+        loginAction.style.color = '#ffaa00';
+        loginAction.style.textDecoration = 'underline';
+        loginAction.style.cursor = 'pointer';
+        
+        loginAction.onclick = (e) => {
+            e.preventDefault();
+            document.body.removeChild(overlay);
+            this.showLoginDialog();
+        };
+        
+        loginLink.appendChild(loginText);
+        loginLink.appendChild(loginAction);
+        contentContainer.appendChild(loginLink);
+        
+        dialog.appendChild(contentContainer);
+        
+        // Add event listeners for form
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const displayName = registerForm.displayName.value.trim();
+            const email = registerForm.email.value.trim();
+            const password = registerForm.password.value;
+            const confirmPassword = registerForm.confirmPassword.value;
+            
+            if (!displayName || !email || !password || !confirmPassword) {
+                this._showAuthError(dialog, this.resources.i18n.get('auth.fillAllFields'));
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                this._showAuthError(dialog, this.resources.i18n.get('auth.passwordsDoNotMatch'));
+                return;
+            }
+            
+            // Simple password validation
+            if (password.length < 6) {
+                this._showAuthError(dialog, this.resources.i18n.get('auth.passwordTooShort'));
+                return;
+            }
+            
+            try {
+                registerSubmit.disabled = true;
+                registerSubmit.textContent = this.resources.i18n.get('auth.registering');
+                registerSubmit.style.backgroundColor = '#7b572c';
+                
+                await userManager.register(email, password, displayName);
+                document.body.removeChild(overlay);
+                this._showNotification(this.resources.i18n.get('auth.registrationSuccess'));
+            } catch (error) {
+                console.error('Registration error:', error);
+                this._showAuthError(dialog, error.message || this.resources.i18n.get('auth.registrationFailed'));
+                
+                registerSubmit.disabled = false;
+                registerSubmit.textContent = this.resources.i18n.get('auth.register');
+                registerSubmit.style.backgroundColor = '#8b673c';
+            }
+        });
+        
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+    }
+
+    /**
      * Show the account dialog for login/registration
      */
     showAccountDialog() {
@@ -262,12 +716,29 @@ class Game {
         // Create dialog container
         const dialog = document.createElement('div');
         dialog.className = 'account-dialog';
-        dialog.style.backgroundColor = '#f0e6d2';
+        
+        // Use wood background like other dialogs
+        dialog.style.backgroundImage = 'url(assets/images/background_levels_wood.png)';
+        dialog.style.backgroundSize = 'cover';
+        dialog.style.backgroundPosition = 'center';
+        dialog.style.border = '8px solid #3a2214';
         dialog.style.borderRadius = '8px';
         dialog.style.padding = '20px';
         dialog.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
         dialog.style.maxWidth = '400px';
         dialog.style.width = '90%';
+        dialog.style.position = 'relative';
+        
+        // Add texture overlay for more wood-like feel
+        const textureOverlay = document.createElement('div');
+        textureOverlay.style.position = 'absolute';
+        textureOverlay.style.top = '0';
+        textureOverlay.style.left = '0';
+        textureOverlay.style.width = '100%';
+        textureOverlay.style.height = '100%';
+        textureOverlay.style.opacity = '0.05';
+        textureOverlay.style.pointerEvents = 'none';
+        dialog.appendChild(textureOverlay);
         
         // Create dialog header
         const header = document.createElement('div');
@@ -275,26 +746,53 @@ class Game {
         header.style.justifyContent = 'space-between';
         header.style.alignItems = 'center';
         header.style.marginBottom = '20px';
+        header.style.position = 'relative';
+        header.style.zIndex = '1';
         
         const title = document.createElement('h2');
         title.textContent = this.isUserAuthenticated ? 
             this.resources.i18n.get('auth.account') : 
             this.resources.i18n.get('auth.signIn');
         title.style.margin = '0';
-        title.style.color = '#5c4425';
+        title.style.color = '#faf0dc';
+        title.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
         
         const closeButton = document.createElement('button');
         closeButton.innerHTML = '&times;';
-        closeButton.style.backgroundColor = 'transparent';
-        closeButton.style.border = 'none';
+        closeButton.style.backgroundColor = 'rgba(150, 80, 30, 0.7)';
+        closeButton.style.border = '2px solid #fbefd5';
+        closeButton.style.borderRadius = '50%';
+        closeButton.style.color = '#faf0dc';
         closeButton.style.fontSize = '20px';
         closeButton.style.cursor = 'pointer';
-        closeButton.style.color = '#5c4425';
+        closeButton.style.width = '30px';
+        closeButton.style.height = '30px';
+        closeButton.style.display = 'flex';
+        closeButton.style.justifyContent = 'center';
+        closeButton.style.alignItems = 'center';
+        closeButton.style.padding = '0';
+        closeButton.style.lineHeight = '0';
+        closeButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.5)';
+        
+        // Hover effect for close button
+        closeButton.onmouseover = () => {
+            closeButton.style.background = 'rgba(180, 100, 40, 0.9)';
+            closeButton.style.transform = 'scale(1.05)';
+        };
+        closeButton.onmouseout = () => {
+            closeButton.style.background = 'rgba(150, 80, 30, 0.7)';
+            closeButton.style.transform = 'scale(1)';
+        };
         closeButton.onclick = () => document.body.removeChild(overlay);
         
         header.appendChild(title);
         header.appendChild(closeButton);
         dialog.appendChild(header);
+        
+        // Create content container
+        const contentContainer = document.createElement('div');
+        contentContainer.style.position = 'relative';
+        contentContainer.style.zIndex = '1';
         
         if (this.isUserAuthenticated) {
             // User is logged in, show account info and sign out button
@@ -303,19 +801,24 @@ class Game {
             
             const nameDisplay = document.createElement('p');
             nameDisplay.innerHTML = `<strong>${this.resources.i18n.get('auth.name')}:</strong> ${this.userProfile.displayName}`;
+            nameDisplay.style.color = '#faf0dc';
+            nameDisplay.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
             
             const emailDisplay = document.createElement('p');
             emailDisplay.innerHTML = `<strong>${this.resources.i18n.get('auth.email')}:</strong> ${this.userProfile.email}`;
+            emailDisplay.style.color = '#faf0dc';
+            emailDisplay.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
             
             profileInfo.appendChild(nameDisplay);
             profileInfo.appendChild(emailDisplay);
-            dialog.appendChild(profileInfo);
+            contentContainer.appendChild(profileInfo);
             
-            // Add sign out button
+            // Add sign out button with fixed height
             const signOutButton = document.createElement('button');
             signOutButton.textContent = this.resources.i18n.get('auth.signOut');
             signOutButton.className = 'auth-button';
-            signOutButton.style.padding = '10px 20px';
+            signOutButton.style.padding = '8px 15px';
+            signOutButton.style.height = '40px';
             signOutButton.style.backgroundColor = '#8b673c';
             signOutButton.style.color = 'white';
             signOutButton.style.border = 'none';
@@ -323,6 +826,21 @@ class Game {
             signOutButton.style.cursor = 'pointer';
             signOutButton.style.fontSize = '16px';
             signOutButton.style.width = '100%';
+            signOutButton.style.boxSizing = 'border-box';
+            signOutButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            
+            // Button hover effects
+            signOutButton.onmouseover = () => {
+                signOutButton.style.backgroundColor = '#9b774c';
+                signOutButton.style.transform = 'translateY(-2px)';
+                signOutButton.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+            };
+            
+            signOutButton.onmouseout = () => {
+                signOutButton.style.backgroundColor = '#8b673c';
+                signOutButton.style.transform = 'translateY(0)';
+                signOutButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            };
             
             signOutButton.onclick = async () => {
                 try {
@@ -335,7 +853,7 @@ class Game {
                 }
             };
             
-            dialog.appendChild(signOutButton);
+            contentContainer.appendChild(signOutButton);
         } else {
             // User is not logged in, show login/register form
             
@@ -351,6 +869,7 @@ class Game {
             loginTab.style.flex = '1';
             loginTab.style.textAlign = 'center';
             loginTab.style.borderBottom = '2px solid #8b673c';
+            loginTab.style.color = '#faf0dc';
             loginTab.dataset.tab = 'login';
             
             const registerTab = document.createElement('div');
@@ -360,11 +879,12 @@ class Game {
             registerTab.style.flex = '1';
             registerTab.style.textAlign = 'center';
             registerTab.style.borderBottom = '2px solid #ccc';
+            registerTab.style.color = '#faf0dc';
             registerTab.dataset.tab = 'register';
             
             tabs.appendChild(loginTab);
             tabs.appendChild(registerTab);
-            dialog.appendChild(tabs);
+            contentContainer.appendChild(tabs);
             
             // Create forms container
             const formsContainer = document.createElement('div');
@@ -375,12 +895,16 @@ class Game {
             loginForm.style.display = 'block';
             
             const loginEmail = this._createFormField('email', 'auth.email', 'email');
+            this._updateFieldStyle(loginEmail);
+            
             const loginPassword = this._createFormField('password', 'auth.password', 'password');
+            this._updateFieldStyle(loginPassword);
             
             const loginSubmit = document.createElement('button');
             loginSubmit.type = 'submit';
             loginSubmit.textContent = this.resources.i18n.get('auth.signIn');
-            loginSubmit.style.padding = '10px 20px';
+            loginSubmit.style.padding = '8px 15px';
+            loginSubmit.style.height = '40px';
             loginSubmit.style.backgroundColor = '#8b673c';
             loginSubmit.style.color = 'white';
             loginSubmit.style.border = 'none';
@@ -389,6 +913,21 @@ class Game {
             loginSubmit.style.fontSize = '16px';
             loginSubmit.style.width = '100%';
             loginSubmit.style.marginTop = '10px';
+            loginSubmit.style.boxSizing = 'border-box';
+            loginSubmit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            
+            // Button hover effects
+            loginSubmit.onmouseover = () => {
+                loginSubmit.style.backgroundColor = '#9b774c';
+                loginSubmit.style.transform = 'translateY(-2px)';
+                loginSubmit.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+            };
+            
+            loginSubmit.onmouseout = () => {
+                loginSubmit.style.backgroundColor = '#8b673c';
+                loginSubmit.style.transform = 'translateY(0)';
+                loginSubmit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            };
             
             loginForm.appendChild(loginEmail);
             loginForm.appendChild(loginPassword);
@@ -400,14 +939,22 @@ class Game {
             registerForm.style.display = 'none';
             
             const registerName = this._createFormField('text', 'auth.name', 'displayName');
+            this._updateFieldStyle(registerName);
+            
             const registerEmail = this._createFormField('email', 'auth.email', 'email');
+            this._updateFieldStyle(registerEmail);
+            
             const registerPassword = this._createFormField('password', 'auth.password', 'password');
+            this._updateFieldStyle(registerPassword);
+            
             const registerConfirmPassword = this._createFormField('password', 'auth.confirmPassword', 'confirmPassword');
+            this._updateFieldStyle(registerConfirmPassword);
             
             const registerSubmit = document.createElement('button');
             registerSubmit.type = 'submit';
             registerSubmit.textContent = this.resources.i18n.get('auth.register');
-            registerSubmit.style.padding = '10px 20px';
+            registerSubmit.style.padding = '8px 15px';
+            registerSubmit.style.height = '40px';
             registerSubmit.style.backgroundColor = '#8b673c';
             registerSubmit.style.color = 'white';
             registerSubmit.style.border = 'none';
@@ -416,6 +963,21 @@ class Game {
             registerSubmit.style.fontSize = '16px';
             registerSubmit.style.width = '100%';
             registerSubmit.style.marginTop = '10px';
+            registerSubmit.style.boxSizing = 'border-box';
+            registerSubmit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            
+            // Button hover effects
+            registerSubmit.onmouseover = () => {
+                registerSubmit.style.backgroundColor = '#9b774c';
+                registerSubmit.style.transform = 'translateY(-2px)';
+                registerSubmit.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+            };
+            
+            registerSubmit.onmouseout = () => {
+                registerSubmit.style.backgroundColor = '#8b673c';
+                registerSubmit.style.transform = 'translateY(0)';
+                registerSubmit.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            };
             
             registerForm.appendChild(registerName);
             registerForm.appendChild(registerEmail);
@@ -425,16 +987,19 @@ class Game {
             
             formsContainer.appendChild(loginForm);
             formsContainer.appendChild(registerForm);
-            dialog.appendChild(formsContainer);
+            contentContainer.appendChild(formsContainer);
             
             // Create error message display
             const errorDisplay = document.createElement('div');
             errorDisplay.id = 'auth-error';
-            errorDisplay.style.color = '#d32f2f';
+            errorDisplay.style.color = '#ff6b6b';
             errorDisplay.style.marginTop = '10px';
             errorDisplay.style.fontSize = '14px';
             errorDisplay.style.display = 'none';
-            dialog.appendChild(errorDisplay);
+            errorDisplay.style.padding = '5px 10px';
+            errorDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+            errorDisplay.style.borderRadius = '4px';
+            contentContainer.appendChild(errorDisplay);
             
             // Add event listeners for forms
             loginForm.addEventListener('submit', async (e) => {
@@ -451,6 +1016,7 @@ class Game {
                 try {
                     loginSubmit.disabled = true;
                     loginSubmit.textContent = this.resources.i18n.get('auth.signingIn');
+                    loginSubmit.style.backgroundColor = '#7b572c';
                     
                     await userManager.signIn(email, password);
                     document.body.removeChild(overlay);
@@ -461,6 +1027,7 @@ class Game {
                     
                     loginSubmit.disabled = false;
                     loginSubmit.textContent = this.resources.i18n.get('auth.signIn');
+                    loginSubmit.style.backgroundColor = '#8b673c';
                 }
             });
             
@@ -496,7 +1063,7 @@ class Game {
                     document.body.removeChild(overlay);
                 } catch (error) {
                     console.error('Registration error:', error);
-                    this._showAuthError(dialog, this.resources.i18n.get('auth.registrationFailed'));
+                    this._showAuthError(dialog, error.message || this.resources.i18n.get('auth.registrationFailed'));
                     
                     registerSubmit.disabled = false;
                     registerSubmit.textContent = this.resources.i18n.get('auth.register');
@@ -521,6 +1088,7 @@ class Game {
             });
         }
         
+        dialog.appendChild(contentContainer);
         overlay.appendChild(dialog);
         document.body.appendChild(overlay);
     }
@@ -557,6 +1125,41 @@ class Game {
         field.appendChild(input);
         
         return field;
+    }
+
+    /**
+     * Update form field style to match wood theme
+     * @param {HTMLDivElement} field - The form field container to update
+     * @private
+     */
+    _updateFieldStyle(field) {
+        const label = field.querySelector('label');
+        if (label) {
+            label.style.color = '#faf0dc';
+            label.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
+        }
+        
+        const input = field.querySelector('input');
+        if (input) {
+            input.style.backgroundColor = 'rgba(250, 240, 220, 0.9)';
+            input.style.border = '2px solid #3a2214';
+            input.style.borderRadius = '4px';
+            input.style.padding = '8px 12px';
+            input.style.fontSize = '16px';
+            input.style.color = '#3a2214';
+            
+            // Add focus styles
+            input.addEventListener('focus', () => {
+                input.style.outline = 'none';
+                input.style.boxShadow = '0 0 5px rgba(255, 170, 0, 0.6)';
+                input.style.borderColor = '#ffaa00';
+            });
+            
+            input.addEventListener('blur', () => {
+                input.style.boxShadow = 'none';
+                input.style.borderColor = '#3a2214';
+            });
+        }
     }
 
     /**
@@ -752,19 +1355,46 @@ class Game {
                 
                 // Reinitialize level positions if game is already running
                 if (this.level) {
+                    const previousOutputWidth = this.level.outputWidth;
+                    
+                    // Reinitialize level which will recalculate outputWidth
                     this.level.initLevel();
                     
-                    // Reinitialize player and boxes positions to match new layout
+                    // Reinitialize player positions to match new layout
                     if (this.player) {
                         this.player.outputWidth = this.level.outputWidth;
-                        this.player.pixelPos = { ...this.player.coord }; // Reset pixel positions
+                        
+                        // Make sure player's visual position matches its logical position
+                        this.player.pixelPos = {
+                            x: this.player.coord.x,
+                            y: this.player.coord.y
+                        };
+                        
+                        // Reset any active animation frame to prevent conflicts
+                        if (this.player.animationFrameId) {
+                            cancelAnimationFrame(this.player.animationFrameId);
+                            this.player.animationFrameId = null;
+                        }
+                        
+                        // Reset movement flags to ensure player is not stuck in moving state
+                        this.player.isMoving = false;
                     }
                     
+                    // Reinitialize boxes positions to match new layout
                     if (this.boxes) {
+                        // Update boxes outputWidth
                         this.boxes.outputWidth = this.level.outputWidth;
-                        // Reset all boxes' pixel positions
+                        
+                        // Reset all boxes' pixel positions to match their logical positions
                         for (const box of this.boxes.boxes) {
-                            box.pixelPos = { ...box.coord };
+                            // Make sure pixel positions match logical positions
+                            box.pixelPos = {
+                                x: box.x,
+                                y: box.y
+                            };
+                            
+                            // Reset movement flags for boxes as well
+                            box.isMoving = false;
                         }
                     }
                     
@@ -784,32 +1414,28 @@ class Game {
      * @private
      */
     _resizeCanvas() {
-        const container = this.canvas.parentElement;
-        if (!container) return;
+        // Get the current window dimensions
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
         
-        const targetWidth = CANVAS.WIDTH;
-        const targetHeight = CANVAS.HEIGHT;
-        const targetRatio = targetWidth / targetHeight;
+        // Update canvas dimensions to match window
+        this.canvas.width = windowWidth;
+        this.canvas.height = windowHeight;
         
-        let width = container.clientWidth;
-        let height = container.clientHeight;
-        
-        // Adjust dimensions to maintain aspect ratio
-        if (width / height > targetRatio) {
-            width = height * targetRatio;
-        } else {
-            height = width / targetRatio;
-        }
-        
-        // Apply new dimensions
-        this.canvas.style.width = `${width}px`;
-        this.canvas.style.height = `${height}px`;
-        
-        // Update stars position if initialized
+        // Update stars position
         if (this.stars3d) {
-            this.stars3d.centerX = Math.floor(this.canvas.width / 2);
-            this.stars3d.centerY = Math.floor(this.canvas.height / 2);
+            this.stars3d.width = windowWidth;
+            this.stars3d.height = windowHeight;
+            this.stars3d.centerX = Math.floor(windowWidth / 2);
+            this.stars3d.centerY = Math.floor(windowHeight / 2);
         }
+        
+        // When level is initialized, tell it to recalculate positions
+        if (this.level) {
+            this.level.initLevel();
+        }
+        
+        console.log(`Canvas resized to ${windowWidth}x${windowHeight}`);
     }
 
     /**
@@ -853,14 +1479,45 @@ class Game {
         return fetch(ASSET_PATHS.LEVELS)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`Network response was not ok, status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                this.levelsData = JSON.parse(JSON.stringify(data));
-                this.levelData = JSON.parse(JSON.stringify(this.levelsData[this.currentLevel]));
+                if (!data) {
+                    throw new Error('No level data received');
+                }
+                
+                // Store the levels data and initialize the first level
+                this.levelsData = data;
+                
+                // Set initial level data if not already set
+                if (!this.levelData && this.levelsData && this.levelsData.length > 0) {
+                    this.levelData = JSON.parse(JSON.stringify(this.levelsData[0]));
+                    this.currentLevel = 0;
+                }
+                
+                console.log(`Successfully loaded ${this.levelsData.length} levels`);
                 return data;
+            })
+            .catch(error => {
+                console.error('Error loading levels:', error);
+                // Provide fallback level data for testing if needed
+                this.levelsData = [{
+                    width: 5,
+                    height: 5,
+                    player: { x: 2, y: 2 },
+                    walls: [
+                        {x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0},
+                        {x: 0, y: 1}, {x: 0, y: 2}, {x: 0, y: 3}, {x: 0, y: 4},
+                        {x: 4, y: 1}, {x: 4, y: 2}, {x: 4, y: 3}, {x: 4, y: 4},
+                        {x: 1, y: 4}, {x: 2, y: 4}, {x: 3, y: 4}
+                    ],
+                    boxes: [{x: 1, y: 1}],
+                    goals: [{x: 3, y: 3}]
+                }];
+                this.levelData = this.levelsData[0];
+                return this.levelsData;
             });
     }
 
@@ -1014,15 +1671,38 @@ class Game {
      * Renders all game elements
      */
     renderGameElements() {
-        // Draw background image for levels
+        // Draw background image with "cover" behavior
         if (this.resources.images && this.resources.images.levelBackground && this.resources.images.levelBackground.image) {
-            // Draw the background image to fill the canvas
+            const img = this.resources.images.levelBackground.image;
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+            const canvasWidth = this.canvas.width;
+            const canvasHeight = this.canvas.height;
+            
+            // Calculate aspect ratios
+            const imgAspect = imgWidth / imgHeight;
+            const canvasAspect = canvasWidth / canvasHeight;
+            
+            // Variables for the crop/position calculation
+            let sx = 0;
+            let sy = 0;
+            let sWidth = imgWidth;
+            let sHeight = imgHeight;
+            
+            // Implement CSS "cover" behavior
+            if (imgAspect > canvasAspect) {
+                sWidth = imgHeight * canvasAspect;
+                sx = (imgWidth - sWidth) / 2;
+            } else if (imgAspect < canvasAspect) {
+                sHeight = imgWidth / canvasAspect;
+                sy = (imgHeight - sHeight) / 2;
+            }
+            
+            // Draw the image to fill the entire canvas
             this.ctx.drawImage(
-                this.resources.images.levelBackground.image, 
-                0, 
-                0, 
-                this.canvas.width, 
-                this.canvas.height
+                img,
+                sx, sy, sWidth, sHeight,
+                0, 0, canvasWidth, canvasHeight
             );
         }
         
@@ -1035,8 +1715,62 @@ class Game {
         
         // Draw small logo in the top-left corner during gameplay
         this.drawCornerLogo();
+        
+        // Draw top action buttons during gameplay
+        if (this.state === GAME_STATES.PLAY) {
+            this.drawTopActionButtons();
+        }
     }
     
+    /**
+     * Draw top action buttons for game controls
+     */
+    drawTopActionButtons() {
+        const buttonSize = 48;
+        const spacing = 10;
+        const topMargin = 10;
+        
+        // Button images from resources - use the correct keys that match how they were loaded
+        const buttonImages = {
+            pause: this.resources.images.ACTION_PAUSE?.image,
+            undo: this.resources.images.ACTION_UNDO?.image,
+            settings: this.resources.images.ACTION_SETTINGS?.image
+        };
+        
+        // Calculate the total width needed for the buttons to be centered
+        const totalButtonsCount = 3; // pause, undo, settings
+        const totalWidth = (buttonSize * totalButtonsCount) + (spacing * (totalButtonsCount - 1));
+        
+        // Calculate starting X position to center the buttons
+        const startX = (this.canvas.width - totalWidth) / 2;
+        
+        // Track clickable areas for each button
+        this.topButtonAreas = {};
+        
+        // Current X position
+        let currentX = startX;
+        
+        // Pause button (leftmost)
+        if (buttonImages.pause) {
+            this.ctx.drawImage(buttonImages.pause, currentX, topMargin, buttonSize, buttonSize);
+            this.topButtonAreas.pause = { x: currentX, y: topMargin, width: buttonSize, height: buttonSize };
+            currentX += (buttonSize + spacing);
+        }
+        
+        // Undo button (middle)
+        if (buttonImages.undo) {
+            this.ctx.drawImage(buttonImages.undo, currentX, topMargin, buttonSize, buttonSize);
+            this.topButtonAreas.undo = { x: currentX, y: topMargin, width: buttonSize, height: buttonSize };
+            currentX += (buttonSize + spacing);
+        }
+        
+        // Settings button (rightmost)
+        if (buttonImages.settings) {
+            this.ctx.drawImage(buttonImages.settings, currentX, topMargin, buttonSize, buttonSize);
+            this.topButtonAreas.settings = { x: currentX, y: topMargin, width: buttonSize, height: buttonSize };
+        }
+    }
+
     /**
      * Draw a small logo in the top-left corner of the game screen
      */
@@ -1175,14 +1909,51 @@ class Game {
      * Display intro/title screen
      */
     showIntroScreen() {
-        // Draw the background image to fill the entire canvas using the dimensions from config
-        this.ctx.drawImage(
-            this.resources.images.main.image, 
-            0, 
-            0, 
-            this.canvas.width, 
-            this.canvas.height
-        );
+        // Get canvas dimensions
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
+        // Draw the background image with "cover" behavior
+        if (this.resources.images && this.resources.images.main && this.resources.images.main.image) {
+            const img = this.resources.images.main.image;
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+            
+            // Calculate aspect ratios
+            const imgAspect = imgWidth / imgHeight;
+            const canvasAspect = canvasWidth / canvasHeight;
+            
+            // Variables for the crop/position calculation
+            let sx = 0; // source x
+            let sy = 0; // source y
+            let sWidth = imgWidth; // source width
+            let sHeight = imgHeight; // source height
+            
+            // Implement CSS "cover" behavior:
+            // If image aspect ratio is greater than canvas aspect ratio,
+            // we crop the image width (crop from sides)
+            if (imgAspect > canvasAspect) {
+                sWidth = imgHeight * canvasAspect;
+                sx = (imgWidth - sWidth) / 2; // Center the cropped portion horizontally
+            } 
+            // If image aspect ratio is less than canvas aspect ratio,
+            // we crop the image height (crop from top/bottom)
+            else if (imgAspect < canvasAspect) {
+                sHeight = imgWidth / canvasAspect;
+                sy = (imgHeight - sHeight) / 2; // Center the cropped portion vertically
+            }
+            
+            // Draw the image to fill the entire canvas
+            this.ctx.drawImage(
+                img,
+                sx, sy, sWidth, sHeight, // Source rectangle (cropped portion)
+                0, 0, canvasWidth, canvasHeight // Destination rectangle (full canvas)
+            );
+        } else {
+            // Fallback if image isn't loaded - fill with a color
+            this.ctx.fillStyle = "#000000";
+            this.ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        }
 
         this.ctx.textAlign = "center";
         this.ctx.font = "20px Arial";
@@ -1195,17 +1966,30 @@ class Game {
 
         // Animate the logo with a wave effect
         for (let y = 0; y < logoHeight; y++) {
-            const x = Math.sin(y * 0.05 + frame) * 5 + (this.ctx.canvas.width / 2 - logoWidth / 2);
+            const x = Math.sin(y * 0.05 + frame) * 5 + (canvasWidth / 2 - logoWidth / 2);
             this.ctx.drawImage(logoImg, 0, y, logoWidth, 1, x, y + -20, logoWidth, 1);
         }
 
-        // Draw the play button - positioned at 80% of canvas height instead of fixed Y
+        // Calculate button dimensions and positions for horizontal layout
         const btnPlayImg = this.resources.images.btnPlay.image;
-        const btnX = this.ctx.canvas.width / 2 - btnPlayImg.width / 2;
-        const btnY = this.canvas.height * 0.7; // Dynamic position at 70% of canvas height
-        this.ctx.drawImage(btnPlayImg, btnX, btnY);
+        const buttonWidth = btnPlayImg.width;
+        const buttonHeight = btnPlayImg.height;
+        const buttonSpacing = 20; // Space between buttons
         
-        // Get "NEW GAME" text and convert to uppercase
+        // Calculate total width of all buttons and spacing
+        const totalButtonsWidth = (buttonWidth * 3) + (buttonSpacing * 2);
+        
+        // Calculate starting X position to center all buttons as a group
+        const startX = (canvasWidth - totalButtonsWidth) / 2;
+        
+        // Common Y position for all buttons - positioned at 70% of canvas height
+        const buttonsY = canvasHeight * 0.7;
+        
+        // Draw the PLAY button (first button)
+        const playX = startX;
+        this.ctx.drawImage(btnPlayImg, playX, buttonsY);
+        
+        // Get "PLAY" text and convert to uppercase
         const newGameText = this.resources.i18n.get('buttons.play').toUpperCase();
         
         // Adjust font size based on text length to prevent overflow
@@ -1220,20 +2004,19 @@ class Game {
         this.ctx.font = `bold ${fontSize}px Arial`;
         
         // Position text centered in the button
-        const btnCenterY = btnY + btnPlayImg.height/2 + 10; // +10 for optical centering
-        const textX = this.ctx.canvas.width / 2;
+        const playBtnCenterY = buttonsY + buttonHeight/2 + 10; // +10 for optical centering
         
         // Text shadow for better visibility
         this.ctx.fillStyle = "rgba(0,0,0,0.7)";
-        this.ctx.fillText(newGameText, textX + 2, btnCenterY + 2);
+        this.ctx.fillText(newGameText, playX + buttonWidth/2 + 2, playBtnCenterY + 2);
         
         // Main text color
         this.ctx.fillStyle = "white";
-        this.ctx.fillText(newGameText, textX, btnCenterY);
+        this.ctx.fillText(newGameText, playX + buttonWidth/2, playBtnCenterY);
         
-        // Draw the level editor button - positioned below the play button
-        const editorY = btnY + btnPlayImg.height + 20;
-        this.ctx.drawImage(btnPlayImg, btnX, editorY);
+        // Draw the LEVEL EDITOR button (second button)
+        const editorX = playX + buttonWidth + buttonSpacing;
+        this.ctx.drawImage(btnPlayImg, editorX, buttonsY);
         
         // Get "LEVEL EDITOR" text and convert to uppercase
         const editorText = this.resources.i18n.get('buttons.levelEditor').toUpperCase();
@@ -1250,49 +2033,107 @@ class Game {
         // Set the font size for editor button text
         this.ctx.font = `bold ${editorFontSize}px Arial`;
         
-        // Position text centered in the button
-        const editorCenterY = editorY + btnPlayImg.height/2 + 10;
-        
         // Text shadow for better visibility
         this.ctx.fillStyle = "rgba(0,0,0,0.7)";
-        this.ctx.fillText(editorText, textX + 2, editorCenterY + 2);
+        this.ctx.fillText(editorText, editorX + buttonWidth/2 + 2, playBtnCenterY + 2);
         
         // Main text color
         this.ctx.fillStyle = "white";
-        this.ctx.fillText(editorText, textX, editorCenterY);
+        this.ctx.fillText(editorText, editorX + buttonWidth/2, playBtnCenterY);
+        
+        // Draw the LOGIN button (third button)
+        const loginX = editorX + buttonWidth + buttonSpacing;
+        this.ctx.drawImage(btnPlayImg, loginX, buttonsY);
+        
+        // Get "SIGN IN" text and convert to uppercase
+        const loginText = this.resources.i18n.get('auth.signIn').toUpperCase();
+        console.log("Login text:", loginText);
+        
+        // Adjust font size based on text length to prevent overflow
+        let loginFontSize = 30; // Default size
+        if (loginText.length > 10) {
+            loginFontSize = 24; // Smaller text for longer strings
+        }
+        if (loginText.length > 15) {
+            loginFontSize = 20; // Even smaller for very long translations
+        }
+        
+        // Set the font size for login button text
+        this.ctx.font = `bold ${loginFontSize}px Arial`;
+        
+        // Text shadow for better visibility
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(loginText, loginX + buttonWidth/2 + 2, playBtnCenterY + 2);
+        
+        // Main text color
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(loginText, loginX + buttonWidth/2, playBtnCenterY);
         
         // Draw version info at the bottom right corner of the canvas
         this.ctx.font = "10px Arial";
         this.ctx.textAlign = "right";
         
         // Dynamic position for version text - 10px from right and bottom edges
-        const versionX = this.canvas.width - 10;
-        const versionY = this.canvas.height - 10;
+        const versionX = canvasWidth - 10;
+        const versionY = canvasHeight - 10;
         
         this.ctx.fillStyle = "black";
         this.ctx.fillText(`© ${COPYRIGHT_YEAR} / Version: ${VERSION}`, versionX + 1, versionY + 1);
         this.ctx.fillStyle = "white";
         this.ctx.fillText(`© ${COPYRIGHT_YEAR} / Version: ${VERSION}`, versionX, versionY);
 
-        // Store button areas for click detection
+        // Store button areas for click detection, with the new horizontal positions
         this.buttonAreas = {
-            play: { x: btnX, y: btnY, width: btnPlayImg.width, height: btnPlayImg.height },
-            editor: { x: btnX, y: editorY, width: btnPlayImg.width, height: btnPlayImg.height }
+            play: { x: playX, y: buttonsY, width: buttonWidth, height: buttonHeight },
+            editor: { x: editorX, y: buttonsY, width: buttonWidth, height: buttonHeight },
+            login: { x: loginX, y: buttonsY, width: buttonWidth, height: buttonHeight }
         };
+        
+        console.log("Button areas:", this.buttonAreas);
     }
 
     /**
      * Display game mode selection screen
      */
     showGameModeScreen() {
-        // Draw the background image
-        this.ctx.drawImage(
-            this.resources.images.levelBackground.image, 
-            0, 
-            0, 
-            this.canvas.width, 
-            this.canvas.height
-        );
+        // Draw the background image with "cover" behavior
+        if (this.resources.images && this.resources.images.levelBackground && this.resources.images.levelBackground.image) {
+            const img = this.resources.images.levelBackground.image;
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+            const canvasWidth = this.canvas.width;
+            const canvasHeight = this.canvas.height;
+            
+            // Calculate aspect ratios
+            const imgAspect = imgWidth / imgHeight;
+            const canvasAspect = canvasWidth / canvasHeight;
+            
+            // Variables for the crop/position calculation
+            let sx = 0;
+            let sy = 0;
+            let sWidth = imgWidth;
+            let sHeight = imgHeight;
+            
+            // Implement CSS "cover" behavior
+            if (imgAspect > canvasAspect) {
+                sWidth = imgHeight * canvasAspect;
+                sx = (imgWidth - sWidth) / 2;
+            } else if (imgAspect < canvasAspect) {
+                sHeight = imgWidth / canvasAspect;
+                sy = (imgHeight - sHeight) / 2;
+            }
+            
+            // Draw the image to fill the entire canvas
+            this.ctx.drawImage(
+                img,
+                sx, sy, sWidth, sHeight,
+                0, 0, canvasWidth, canvasHeight
+            );
+        } else {
+            // Fallback if image isn't loaded
+            this.ctx.fillStyle = "#000000";
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
 
         // Draw logo at the top
         const logoImg = this.resources.images.logo.image;
@@ -1329,41 +2170,90 @@ class Game {
         const normalModeY = buttonsStartY;
         this.ctx.drawImage(btnPlayImg, normalModeX, normalModeY);
         
+        // Get "NORMAL MODE" text and convert to uppercase
+        const normalModeText = this.resources.i18n.get('gameModes.normal').toUpperCase();
+        
+        // Adjust font size based on text length to prevent overflow
+        let normalModeFontSize = 30; // Default size
+        if (normalModeText.length > 10) {
+            normalModeFontSize = 24; // Smaller text for longer strings
+        }
+        if (normalModeText.length > 15) {
+            normalModeFontSize = 20; // Even smaller for very long translations
+        }
+        
+        this.ctx.font = `bold ${normalModeFontSize}px Arial`;
+        
+        // Position text centered in the button
+        const normalModeCenterY = normalModeY + buttonHeight / 2 + 10; // +10 for optical centering
+        
+        // Text shadow for better visibility
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(normalModeText, normalModeX + buttonWidth / 2 + 2, normalModeCenterY + 2);
+        
+        // Main text color
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(normalModeText, normalModeX + buttonWidth / 2, normalModeCenterY);
+        
         // Time Attack Button
-        const timeAttackX = this.canvas.width / 2 - buttonWidth / 2;
+        const timeAttackX = normalModeX;
         const timeAttackY = normalModeY + buttonHeight + buttonSpacing;
         this.ctx.drawImage(btnPlayImg, timeAttackX, timeAttackY);
         
+        // Get "TIME ATTACK" text and convert to uppercase
+        const timeAttackText = this.resources.i18n.get('gameModes.timeAttack').toUpperCase();
+        
+        // Adjust font size based on text length to prevent overflow
+        let timeAttackFontSize = 30; // Default size
+        if (timeAttackText.length > 10) {
+            timeAttackFontSize = 24; // Smaller text for longer strings
+        }
+        if (timeAttackText.length > 15) {
+            timeAttackFontSize = 20; // Even smaller for very long translations
+        }
+        
+        this.ctx.font = `bold ${timeAttackFontSize}px Arial`;
+        
+        // Position text centered in the button
+        const timeAttackCenterY = timeAttackY + buttonHeight / 2 + 10; // +10 for optical centering
+        
+        // Text shadow for better visibility
+        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+        this.ctx.fillText(timeAttackText, timeAttackX + buttonWidth / 2 + 2, timeAttackCenterY + 2);
+        
+        // Main text color
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(timeAttackText, timeAttackX + buttonWidth / 2, timeAttackCenterY);
+        
         // Challenge Mode Button
-        const challengeModeX = this.canvas.width / 2 - buttonWidth / 2;
+        const challengeModeX = normalModeX;
         const challengeModeY = timeAttackY + buttonHeight + buttonSpacing;
         this.ctx.drawImage(btnPlayImg, challengeModeX, challengeModeY);
         
-        // Button labels
-        this.ctx.font = "bold 24px Arial";
-        this.ctx.textAlign = "center";
-        const centerX = this.canvas.width / 2;
+        // Get "CHALLENGE MODE" text and convert to uppercase
+        const challengeModeText = this.resources.i18n.get('gameModes.challenge').toUpperCase();
         
-        // Normal Mode label
-        const normalModeCenterY = normalModeY + buttonHeight / 2 + 8;
-        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
-        this.ctx.fillText(this.resources.i18n.get('gameModes.normal'), centerX + 2, normalModeCenterY + 2);
-        this.ctx.fillStyle = "white";
-        this.ctx.fillText(this.resources.i18n.get('gameModes.normal'), centerX, normalModeCenterY);
+        // Adjust font size based on text length to prevent overflow
+        let challengeModeFontSize = 30; // Default size
+        if (challengeModeText.length > 10) {
+            challengeModeFontSize = 24; // Smaller text for longer strings
+        }
+        if (challengeModeText.length > 15) {
+            challengeModeFontSize = 20; // Even smaller for very long translations
+        }
         
-        // Time Attack label
-        const timeAttackCenterY = timeAttackY + buttonHeight / 2 + 8;
-        this.ctx.fillStyle = "rgba(0,0,0,0.7)";
-        this.ctx.fillText(this.resources.i18n.get('gameModes.timeAttack'), centerX + 2, timeAttackCenterY + 2);
-        this.ctx.fillStyle = "white";
-        this.ctx.fillText(this.resources.i18n.get('gameModes.timeAttack'), centerX, timeAttackCenterY);
+        this.ctx.font = `bold ${challengeModeFontSize}px Arial`;
         
-        // Challenge Mode label
-        const challengeModeCenterY = challengeModeY + buttonHeight / 2 + 8;
+        // Position text centered in the button
+        const challengeModeCenterY = challengeModeY + buttonHeight / 2 + 10; // +10 for optical centering
+        
+        // Text shadow for better visibility
         this.ctx.fillStyle = "rgba(0,0,0,0.7)";
-        this.ctx.fillText(this.resources.i18n.get('gameModes.challenge'), centerX + 2, challengeModeCenterY + 2);
+        this.ctx.fillText(challengeModeText, challengeModeX + buttonWidth / 2 + 2, challengeModeCenterY + 2);
+        
+        // Main text color
         this.ctx.fillStyle = "white";
-        this.ctx.fillText(this.resources.i18n.get('gameModes.challenge'), centerX, challengeModeCenterY);
+        this.ctx.fillText(challengeModeText, challengeModeX + buttonWidth / 2, challengeModeCenterY);
         
         // Back button (smaller, at bottom)
         const backButtonScale = 0.8;
@@ -1552,7 +2442,7 @@ class Game {
      * @param {Error} error - The error that occurred
      */
     showErrorMessage(error) {
-        const textX = this.ctx.canvas.width / 2;
+        const textX = this.ctx.canvas.width / 2 - 160;
         const textY = this.ctx.canvas.height / 2 + 120;
         this.ctx.font = "16px Arial";
         this.ctx.fillStyle = "red";
@@ -1947,7 +2837,7 @@ class Game {
     checkLevelComplete() {
         // Make sure we have the same number of boxes and goals
         if (this.boxes.boxes.length !== this.goal.goals.length) {
-            console.error("Number of boxes doesn't match number of goals!");
+            console.error("Number of boxes doesn't match number of goals!", this.boxes.boxes.length, this.goal.goals.length);
             return false;
         }
 
@@ -2471,18 +3361,23 @@ class Game {
      * @returns {boolean} - True if mobile device
      */
     isMobileDevice() {
-        // More reliable detection using both user agent and touch capability
+        // More reliable detection using multiple factors
+        
+        // Check for touch capability
         const hasTouchScreen = (
+            ('ontouchstart' in window) ||
             ('maxTouchPoints' in navigator && navigator.maxTouchPoints > 0) ||
             ('msMaxTouchPoints' in navigator && navigator.msMaxTouchPoints > 0) ||
             (window.matchMedia && window.matchMedia('(pointer:coarse)').matches)
         );
         
-        const isMobileUserAgent = /iPhone|iPad|iPod|Android|webOS|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+        // Check for mobile user agent
+        const isMobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        // For it to be considered a mobile device, it should have touch capability 
-        // AND either have a mobile user agent OR have a small screen width
-        const isSmallScreen = window.innerWidth <= 768;
+        // Check for small screen (typical for mobile devices)
+        const isSmallScreen = window.innerWidth <= 1024;
+        
+        // For better reliability, combine these factors
         return hasTouchScreen && (isMobileUserAgent || isSmallScreen);
     }
 
@@ -2543,25 +3438,32 @@ class Game {
             const savedSettings = localStorage.getItem('sokoban_settings');
             
             if (savedSettings) {
-                const settings = JSON.parse(savedSettings);
-                
-                // Apply movement speed if valid
-                if (settings.movementSpeed && PHYSICS.MOVEMENT_SPEEDS[settings.movementSpeed]) {
-                    this.settings.movementSpeed = settings.movementSpeed;
-                    this.currentSpeedSetting = settings.movementSpeed;
-                    console.log(`Loaded movement speed: ${settings.movementSpeed}`);
-                }
-                
-                // Apply music setting if defined
-                if (settings.musicEnabled !== undefined) {
-                    if (settings.musicEnabled) {
-                        // Only play music automatically in intro screen
-                        if (this.state === GAME_STATES.INTRO) {
-                            this.resources.playBackgroundMusic();
-                        }
-                    } else {
-                        this.resources.sound.music.pause();
+                try {
+                    const settings = JSON.parse(savedSettings);
+                    
+                    // Apply movement speed if valid
+                    if (settings.movementSpeed && PHYSICS.MOVEMENT_SPEEDS[settings.movementSpeed]) {
+                        this.settings.movementSpeed = settings.movementSpeed;
+                        this.currentSpeedSetting = settings.movementSpeed;
+                        console.log(`Loaded movement speed: ${settings.movementSpeed}`);
                     }
+                    
+                    // Apply music setting if defined
+                    if (settings.musicEnabled !== undefined) {
+                        if (settings.musicEnabled) {
+                            // Only play music automatically in intro screen
+                            if (this.state === GAME_STATES.INTRO) {
+                                this.resources.playBackgroundMusic();
+                            }
+                        } else {
+                            this.resources.sound.music.pause();
+                        }
+                    }
+                } catch (parseError) {
+                    // Handle JSON parse error specifically
+                    console.warn('Error parsing settings from local storage:', parseError);
+                    // Remove invalid settings data to prevent future errors
+                    localStorage.removeItem('sokoban_settings');
                 }
             }
         } catch (e) {

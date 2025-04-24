@@ -196,31 +196,41 @@ export class Score {
         const canvasWidth = ctx.canvas.width;
         const canvasHeight = ctx.canvas.height;
         
-        // Fixed panel height of 130px
-        const panelHeight = 130;
+        // Define panel dimensions with proper aspect ratio
+        const originalPanelWidth = 800; // Original design width
+        const originalPanelHeight = 130; // Original design height
+        const panelAspectRatio = originalPanelWidth / originalPanelHeight;
         
-        // Position the score panel at the bottom of the canvas
-        const panelY = canvasHeight - panelHeight;
+        // Calculate panel size based on screen width with some margins
+        const maxPanelWidth = Math.min(canvasWidth * 0.95, 900); // Limit max width
+        const panelWidth = maxPanelWidth;
+        const panelHeight = panelWidth / panelAspectRatio;
+        
+        // Center the panel horizontally
+        const panelX = (canvasWidth - panelWidth) / 2;
+        
+        // Position the panel at the bottom of the canvas with some margin
+        const panelY = canvasHeight - panelHeight - 10;
         
         // Draw the panel background with an image if available
         if (this.resources.images && this.resources.images.woodPanel && this.resources.images.woodPanel.image) {
-            // Draw the wood panel background image
+            // Draw the wood panel background image, centered and with proper aspect ratio
             ctx.drawImage(
                 this.resources.images.woodPanel.image,
-                0, 
+                panelX, 
                 panelY, 
-                canvasWidth, 
+                panelWidth, 
                 panelHeight
             );
         } else {
             // Fallback to semi-transparent background if image isn't available
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(0, panelY, canvasWidth, panelHeight);
+            ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
         }
         
-        // Add right padding to avoid the man in the background image
-        const rightPadding = 120; // Pixels to leave for the man image on the right
-        const usableWidth = canvasWidth - rightPadding;
+        // Adjust right padding proportionally
+        const rightPadding = 120 * (panelWidth / originalPanelWidth);
+        const usableWidth = panelWidth - rightPadding;
         
         // Calculate section widths with the right padding taken into account
         let sectionWidth;
@@ -235,23 +245,28 @@ export class Score {
             sectionWidth = Math.floor(usableWidth / sections);
         }
         
-        // Calculate section positions
-        const section1X = Math.floor(sectionWidth * 0.5);
-        const section2X = Math.floor(sectionWidth * 1.5);
-        const section3X = Math.floor(sectionWidth * 2.5);
-        const section4X = Math.floor(sectionWidth * 3.5);
-        const section5X = Math.floor(sectionWidth * 4.5);
-        const section6X = this.timeGoal !== null ? Math.floor(sectionWidth * 5.5) : 0;
+        // Calculate section positions (adjusted for panelX)
+        const section1X = panelX + Math.floor(sectionWidth * 0.5);
+        const section2X = panelX + Math.floor(sectionWidth * 1.5);
+        const section3X = panelX + Math.floor(sectionWidth * 2.5);
+        const section4X = panelX + Math.floor(sectionWidth * 3.5);
+        const section5X = panelX + Math.floor(sectionWidth * 4.5);
+        const section6X = this.timeGoal !== null ? panelX + Math.floor(sectionWidth * 5.5) : 0;
         
-        // Define icon dimensions
-        const iconSize = 32;
+        // Calculate icon size proportionally to panel height
+        const iconSize = Math.floor(32 * (panelHeight / originalPanelHeight));
         
         // Calculate positions for top and bottom rows
-        const topRowY = panelY + panelHeight * 0.35 + 22;
-        const bottomRowY = panelY + panelHeight * 0.75 + 7;
+        const topRowY = panelY + panelHeight * 0.35 + 22 * (panelHeight / originalPanelHeight);
+        const bottomRowY = panelY + panelHeight * 0.75 + 7 * (panelHeight / originalPanelHeight);
+        
+        // Scale font size proportionally
+        const fontSize = Math.floor(22 * (panelHeight / originalPanelHeight));
+        const smallFontSize = Math.floor(14 * (panelHeight / originalPanelHeight));
+        const tinyFontSize = Math.floor(12 * (panelHeight / originalPanelHeight));
         
         // Set up font for the values
-        ctx.font = "22px Arial";
+        ctx.font = `${fontSize}px Arial`;
         ctx.textAlign = "center";
         
         // Prepare values to display
@@ -317,16 +332,16 @@ export class Score {
                     const bestValue = this.personalBest.bestMoves.toString();
                     
                     // Draw "BEST" label
-                    ctx.font = "12px Arial";
+                    ctx.font = `${tinyFontSize}px Arial`;
                     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    ctx.fillText(bestLabel, section2X, topRowY - 18 + 1);
+                    ctx.fillText(bestLabel, section2X, topRowY - 18 * (panelHeight / originalPanelHeight) + 1);
                     ctx.fillStyle = '#00ffcc';
-                    ctx.fillText(bestLabel, section2X, topRowY - 18);
+                    ctx.fillText(bestLabel, section2X, topRowY - 18 * (panelHeight / originalPanelHeight));
                     
                     // Draw best value
-                    ctx.font = "14px Arial";
+                    ctx.font = `${smallFontSize}px Arial`;
                     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    ctx.fillText(bestValue, section2X, bottomRowY + 20 + 1);
+                    ctx.fillText(bestValue, section2X, bottomRowY + 20 * (panelHeight / originalPanelHeight) + 1);
                     
                     // Color coding for comparing to best
                     const isBetter = this.moves < this.personalBest.bestMoves;
@@ -334,7 +349,7 @@ export class Score {
                     const color = isBetter ? '#00ff00' : (isTied ? '#00ffcc' : '#ffffff');
                     
                     ctx.fillStyle = color;
-                    ctx.fillText(bestValue, section2X, bottomRowY + 20);
+                    ctx.fillText(bestValue, section2X, bottomRowY + 20 * (panelHeight / originalPanelHeight));
                 }
             }
             
@@ -364,16 +379,16 @@ export class Score {
                     const bestValue = this.personalBest.bestPushes.toString();
                     
                     // Draw "BEST" label
-                    ctx.font = "12px Arial";
+                    ctx.font = `${tinyFontSize}px Arial`;
                     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    ctx.fillText(bestLabel, section3X, topRowY - 18 + 1);
+                    ctx.fillText(bestLabel, section3X, topRowY - 18 * (panelHeight / originalPanelHeight) + 1);
                     ctx.fillStyle = '#00ffcc';
-                    ctx.fillText(bestLabel, section3X, topRowY - 18);
+                    ctx.fillText(bestLabel, section3X, topRowY - 18 * (panelHeight / originalPanelHeight));
                     
                     // Draw best value
-                    ctx.font = "14px Arial";
+                    ctx.font = `${smallFontSize}px Arial`;
                     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    ctx.fillText(bestValue, section3X, bottomRowY + 20 + 1);
+                    ctx.fillText(bestValue, section3X, bottomRowY + 20 * (panelHeight / originalPanelHeight) + 1);
                     
                     // Color coding for comparing to best
                     const isBetter = this.pushes < this.personalBest.bestPushes;
@@ -381,7 +396,7 @@ export class Score {
                     const color = isBetter ? '#00ff00' : (isTied ? '#00ffcc' : '#ffffff');
                     
                     ctx.fillStyle = color;
-                    ctx.fillText(bestValue, section3X, bottomRowY + 20);
+                    ctx.fillText(bestValue, section3X, bottomRowY + 20 * (panelHeight / originalPanelHeight));
                 }
             }
             
@@ -432,16 +447,16 @@ export class Score {
                     const bestValue = this.formatTime(this.personalBest.bestTime);
                     
                     // Draw "BEST" label
-                    ctx.font = "12px Arial";
+                    ctx.font = `${tinyFontSize}px Arial`;
                     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    ctx.fillText(bestLabel, section5X, topRowY - 18 + 1);
+                    ctx.fillText(bestLabel, section5X, topRowY - 18 * (panelHeight / originalPanelHeight) + 1);
                     ctx.fillStyle = '#00ffcc';
-                    ctx.fillText(bestLabel, section5X, topRowY - 18);
+                    ctx.fillText(bestLabel, section5X, topRowY - 18 * (panelHeight / originalPanelHeight));
                     
                     // Draw best value
-                    ctx.font = "14px Arial";
+                    ctx.font = `${smallFontSize}px Arial`;
                     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    ctx.fillText(bestValue, section5X, bottomRowY + 20 + 1);
+                    ctx.fillText(bestValue, section5X, bottomRowY + 20 * (panelHeight / originalPanelHeight) + 1);
                     
                     // Color coding for comparing to best
                     const isBetter = this.elapsedTime < this.personalBest.bestTime;
@@ -449,7 +464,7 @@ export class Score {
                     const color = isBetter ? '#00ff00' : (isTied ? '#00ffcc' : '#ffffff');
                     
                     ctx.fillStyle = color;
-                    ctx.fillText(bestValue, section5X, bottomRowY + 20);
+                    ctx.fillText(bestValue, section5X, bottomRowY + 20 * (panelHeight / originalPanelHeight));
                 }
             }
             
@@ -473,15 +488,16 @@ export class Score {
                 }
                 
                 // Draw goal label
-                ctx.font = "16px Arial";
+                const labelSize = Math.floor(16 * (panelHeight / originalPanelHeight));
+                ctx.font = `${labelSize}px Arial`;
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillText(this.textElements.timeGoal, section6X, topRowY - 18 + 1);
+                ctx.fillText(this.textElements.timeGoal, section6X, topRowY - 18 * (panelHeight / originalPanelHeight) + 1);
                 
                 ctx.fillStyle = '#ffdd00';
-                ctx.fillText(this.textElements.timeGoal, section6X, topRowY - 18);
+                ctx.fillText(this.textElements.timeGoal, section6X, topRowY - 18 * (panelHeight / originalPanelHeight));
                 
                 // Draw time goal value
-                ctx.font = "22px Arial";
+                ctx.font = `${fontSize}px Arial`;
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
                 ctx.fillText(timeGoalValue, section6X, bottomRowY + 1);
                 
@@ -489,9 +505,6 @@ export class Score {
                 const timeColor = this.elapsedTime <= this.timeGoal ? '#00ff00' : '#ff6666';
                 ctx.fillStyle = timeColor;
                 ctx.fillText(timeGoalValue, section6X, bottomRowY);
-                
-                // Return to normal font size
-                ctx.font = "22px Arial";
             }
         }
     }
