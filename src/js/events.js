@@ -46,6 +46,11 @@ export function initEvents(gameInstance) {
         event.preventDefault();
         handleCanvasClick(event, gameInstance);
     });
+    
+    // Add mousemove listener to change cursor when over clickable elements
+    mainCanvas.addEventListener("mousemove", function(event) {
+        handleMouseMove(event, gameInstance);
+    });
 
     // Function to process movement based on currently held keys
     function processContinuousMovement() {
@@ -628,6 +633,75 @@ function handleCanvasClick(event, gameInstance) {
     } else if (gameInstance.state === GAME_STATES.GAME_MODE_SELECT) {
         handleGameModeSelectionClick(event, gameInstance);
     }
+}
+
+function handleMouseMove(event, gameInstance) {
+    const rect = mainCanvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    let isOverClickableElement = false;
+    
+    // Check if mouse is over top action buttons
+    if (gameInstance.topButtonAreas) {
+        Object.values(gameInstance.topButtonAreas).forEach(area => {
+            if (mouseX >= area.x && mouseX <= area.x + area.width &&
+                mouseY >= area.y && mouseY <= area.y + area.height) {
+                isOverClickableElement = true;
+            }
+        });
+    }
+    
+    // Check if mouse is over other clickable areas based on game state
+    if (gameInstance.buttonAreas) {
+        // For intro screen and game mode selection screen
+        if (gameInstance.state === GAME_STATES.INTRO || 
+            gameInstance.state === GAME_STATES.GAME_MODE_SELECT) {
+            Object.values(gameInstance.buttonAreas).forEach(area => {
+                if (mouseX >= area.x && mouseX <= area.x + area.width &&
+                    mouseY >= area.y && mouseY <= area.y + area.height) {
+                    isOverClickableElement = true;
+                }
+            });
+        }
+    }
+    
+    // Check for pause screen buttons
+    if (gameInstance.state === GAME_STATES.PAUSED) {
+        // Check for play button in pause menu
+        if (gameInstance.resources.images.btnPlay && gameInstance.resources.images.btnPlay.image) {
+            const btnPlayImg = gameInstance.resources.images.btnPlay.image;
+            const textX = gameInstance.canvas.width / 2;
+            const textY = gameInstance.canvas.height / 2 - 50;
+            const btnX = textX - btnPlayImg.width / 2;
+            const btnY = textY + 40;
+            const btnWidth = btnPlayImg.width;
+            const btnHeight = btnPlayImg.height;
+            
+            if (mouseX >= btnX && mouseX <= btnX + btnWidth && 
+                mouseY >= btnY && mouseY <= btnY + btnHeight) {
+                isOverClickableElement = true;
+            }
+        }
+        
+        // Check for speed setting buttons
+        if (gameInstance.speedButtons) {
+            gameInstance.speedButtons.forEach(button => {
+                if (mouseX >= button.x && mouseX <= button.x + button.width &&
+                    mouseY >= button.y && mouseY <= button.y + button.height) {
+                    isOverClickableElement = true;
+                }
+            });
+        }
+    }
+    
+    // For win screen (entire screen is clickable to advance)
+    if (gameInstance.state === GAME_STATES.WIN) {
+        isOverClickableElement = true;
+    }
+    
+    // Change cursor style based on whether the mouse is over a clickable element
+    mainCanvas.style.cursor = isOverClickableElement ? 'pointer' : 'default';
 }
 
 function handleSpaceKey(gameInstance) {

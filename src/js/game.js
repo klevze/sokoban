@@ -215,7 +215,7 @@ class Game {
             notification = document.createElement('div');
             notification.id = 'game-notification';
             notification.style.position = 'absolute';
-            notification.style.top = '10px';
+            notification.style.bottom = '10px';
             notification.style.left = '50%';
             notification.style.transform = 'translateX(-50%)';
             notification.style.padding = '10px 20px';
@@ -224,7 +224,7 @@ class Game {
             notification.style.borderRadius = '5px';
             notification.style.fontFamily = 'Arial, sans-serif';
             notification.style.fontSize = '14px';
-            notification.style.zIndex = '1000';
+            notification.style.zIndex = '20'; // Lower z-index so it doesn't overlap clickable elements
             notification.style.opacity = '0';
             notification.style.transition = 'opacity 0.3s ease';
             document.body.appendChild(notification);
@@ -2255,11 +2255,11 @@ class Game {
         this.ctx.fillStyle = "white";
         this.ctx.fillText(challengeModeText, challengeModeX + buttonWidth / 2, challengeModeCenterY);
         
-        // Back button (smaller, at bottom)
+        // Back button (smaller, centered at bottom)
         const backButtonScale = 0.8;
         const backButtonWidth = buttonWidth * backButtonScale;
         const backButtonHeight = buttonHeight * backButtonScale;
-        const backButtonX = 20;
+        const backButtonX = this.canvas.width / 2 - backButtonWidth / 2; // Center horizontally
         const backButtonY = this.canvas.height - backButtonHeight - 20;
         
         // Draw scaled back button
