@@ -143,6 +143,11 @@ export class LevelEditor {
         this.handleMouseMove = this.onMouseMove.bind(this);
         this.handleMouseUp = this.onMouseUp.bind(this);
         this.handleKeyDown = this.onKeyDown.bind(this);
+        
+        // Add touch event handlers for mobile support
+        this.handleTouchStart = this.onTouchStart.bind(this);
+        this.handleTouchMove = this.onTouchMove.bind(this);
+        this.handleTouchEnd = this.onTouchEnd.bind(this);
     }
     
     /**
@@ -152,12 +157,19 @@ export class LevelEditor {
         this.active = true;
         this.clearLevel();
         
-        // Add event listeners
+        // Add event listeners - both mouse (for desktop) and touch (for mobile)
         const canvas = this.ctx.canvas;
+        
+        // Mouse events
         canvas.addEventListener('mousedown', this.handleMouseDown);
         canvas.addEventListener('mousemove', this.handleMouseMove);
         canvas.addEventListener('mouseup', this.handleMouseUp);
         document.addEventListener('keydown', this.handleKeyDown);
+        
+        // Touch events
+        canvas.addEventListener('touchstart', this.handleTouchStart);
+        canvas.addEventListener('touchmove', this.handleTouchMove);
+        canvas.addEventListener('touchend', this.handleTouchEnd);
     }
     
     /**
@@ -168,10 +180,17 @@ export class LevelEditor {
         
         // Remove event listeners
         const canvas = this.ctx.canvas;
+        
+        // Mouse events
         canvas.removeEventListener('mousedown', this.handleMouseDown);
         canvas.removeEventListener('mousemove', this.handleMouseMove);
         canvas.removeEventListener('mouseup', this.handleMouseUp);
         document.removeEventListener('keydown', this.handleKeyDown);
+        
+        // Touch events
+        canvas.removeEventListener('touchstart', this.handleTouchStart);
+        canvas.removeEventListener('touchmove', this.handleTouchMove);
+        canvas.removeEventListener('touchend', this.handleTouchEnd);
     }
     
     /**
@@ -214,6 +233,79 @@ export class LevelEditor {
      * @param {MouseEvent} e - The mouse event
      */
     onMouseUp(e) {
+        this.mouseDown = false;
+    }
+    
+    /**
+     * Handle touch start event (equivalent to mouse down)
+     * @param {TouchEvent} e - The touch event
+     */
+    onTouchStart(e) {
+        if (!this.active) return;
+        
+        e.preventDefault(); // Prevent scrolling and default touch behaviors
+        
+        this.mouseDown = true;
+        
+        // Get the first touch point
+        const touch = e.touches[0];
+        const rect = this.ctx.canvas.getBoundingClientRect();
+        const touchX = touch.clientX - rect.left;
+        const touchY = touch.clientY - rect.top;
+        
+        // Create a synthetic mouse event to reuse existing code
+        const simulatedEvent = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            preventDefault: () => {}
+        };
+        
+        // Check if touch is in tile palette area
+        if (touchY > this.ctx.canvas.height - 100) {
+            this.handlePaletteClick(simulatedEvent);
+            return;
+        }
+        
+        // Otherwise place tile
+        this.placeTile(simulatedEvent);
+    }
+    
+    /**
+     * Handle touch move event (equivalent to mouse move)
+     * @param {TouchEvent} e - The touch event
+     */
+    onTouchMove(e) {
+        if (!this.active || !this.mouseDown) return;
+        
+        e.preventDefault(); // Prevent scrolling
+        
+        // Get the first touch point
+        const touch = e.touches[0];
+        
+        // Create a synthetic mouse event
+        const simulatedEvent = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            preventDefault: () => {}
+        };
+        
+        // Prevent placing tiles when over the palette area
+        const rect = this.ctx.canvas.getBoundingClientRect();
+        const touchY = touch.clientY - rect.top;
+        if (touchY > this.ctx.canvas.height - 100) {
+            return;
+        }
+        
+        // Place tile on drag
+        this.placeTile(simulatedEvent);
+    }
+    
+    /**
+     * Handle touch end event (equivalent to mouse up)
+     * @param {TouchEvent} e - The touch event
+     */
+    onTouchEnd(e) {
+        e.preventDefault();
         this.mouseDown = false;
     }
     

@@ -3534,8 +3534,9 @@ class Game {
         // Check for small screen (typical for mobile devices)
         const isSmallScreen = window.innerWidth <= 1024;
         
-        // For better reliability, combine these factors
-        return hasTouchScreen && (isMobileUserAgent || isSmallScreen);
+        // For better reliability, consider touch capability as the primary factor
+        // This will make sure tablets are correctly identified as mobile devices
+        return hasTouchScreen;
     }
 
     /**
